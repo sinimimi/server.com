@@ -1,29 +1,39 @@
-const scannedKeys = new Set(); // In a real-world app, use a database to track scanned keys
+const fetch = require("node-fetch");
 
-exports.handler = async function(event, context) {
-  // Get the API key from the query parameters
-  const { apiKey } = event.queryStringParameters;
+let scanStatus = {}; // Temporary store (or use Redis/Database for persistence)
 
-  if (!apiKey) {
+exports.handler = async (event) => {
+    const { apiKey } = event.queryStringParameters;
+
+    if (!apiKey) {
+        return {
+            statusCode: 400,
+            body: JSON.stringify({ status: "error", message: "Missing API key" }),
+        };
+    }
+
+    // Mark this API key as "scanned"
+    scanStatus[apiKey] = { status: "positive", timestamp: Date.now() };
+
     return {
-      statusCode: 400,
-      body: JSON.stringify({ message: 'No API key provided.' }),
+        statusCode: 200,
+        body: JSON.stringify({ status: "positive", message: "QR Code Scanned Successfully" }),
     };
-  }
+};
 
-  if (scannedKeys.has(apiKey)) {
+// New function to check the scan status
+exports.checkScanStatus = async (event) => {
+    const { apiKey } = event.queryStringParameters;
+
+    if (!apiKey || !scanStatus[apiKey]) {
+        return {
+            statusCode: 200,
+            body: JSON.stringify({ status: "negative", message: "Not scanned yet" }),
+        };
+    }
+
     return {
-      statusCode: 200, // Indicating the key has already been scanned
-      body: JSON.stringify({ status: 'negative', message: 'API key has already been scanned.' }),
+        statusCode: 200,
+        body: JSON.stringify({ status: "positive", message: "Scanned" }),
     };
-  }
-
-  // Mark the API key as scanned
-  scannedKeys.add(apiKey);
-
-  // Return positive response with success status
-  return {
-    statusCode: 200,
-    body: JSON.stringify({ status: 'positive', message: 'API key scanned successfully.' }),
-  };
 };
