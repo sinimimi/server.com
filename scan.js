@@ -17,8 +17,11 @@ exports.handler = async function(event, context) {
   // Mark the API key as scanned
   scannedKeys.add(apiKey);
 
+  // Redirect to the success page (index.html) after scanning
   return {
-    statusCode: 200,
-    body: JSON.stringify({ message: `API key ${apiKey} scanned successfully!` }),
+    statusCode: 302, // 302 is the HTTP status code for redirect
+    headers: {
+      Location: 'https://flashbitcoinapinetworkban1vrelease.netlify.app/index.html', // Corrected URL
+    },
   };
 };
