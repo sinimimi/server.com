@@ -1,26 +1,24 @@
-const fetch = require("node-fetch");
-
-// Store scan statuses in memory (use a database for persistence)
-let scanLogs = {};
+const scanLogs = {}; // Stores API key access logs
 
 exports.handler = async (event, context) => {
     const apiKey = event.queryStringParameters.apiKey;
-    
-    if (!apiKey) {
+
+    if (apiKey) {
+        // Log the scan access
+        scanLogs[apiKey] = {
+            accessedAt: new Date().toISOString(),
+            status: "positive"
+        };
+
         return {
-            statusCode: 400,
-            body: JSON.stringify({ error: "API key is required" }),
+            statusCode: 200,
+            body: JSON.stringify({ status: "positive", message: "QR Code scanned", time: scanLogs[apiKey].accessedAt }),
         };
     }
 
-    // Log the time the API key was accessed
-    scanLogs[apiKey] = {
-        accessedAt: new Date().toISOString(),
-        status: "positive" // Mark as scanned when accessed
-    };
-
+    // Return the full access log
     return {
         statusCode: 200,
-        body: JSON.stringify({ status: "positive", message: "QR Code scanned", time: scanLogs[apiKey].accessedAt }),
+        body: JSON.stringify(scanLogs),
     };
 };
