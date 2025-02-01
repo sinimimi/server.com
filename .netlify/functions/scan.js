@@ -1,5 +1,3 @@
-// netlify/functions/scan.js
-
 const scannedKeys = new Set(); // In a real-world app, use a database to track scanned keys
 
 exports.handler = async function(event, context) {
@@ -15,19 +13,17 @@ exports.handler = async function(event, context) {
 
   if (scannedKeys.has(apiKey)) {
     return {
-      statusCode: 400,
-      body: JSON.stringify({ message: 'API key has already been scanned.' }),
+      statusCode: 200, // Indicating the key has already been scanned
+      body: JSON.stringify({ status: 'negative', message: 'API key has already been scanned.' }),
     };
   }
 
   // Mark the API key as scanned
   scannedKeys.add(apiKey);
 
-  // Redirect to the success page
+  // Return positive response with success status
   return {
-    statusCode: 302, // 302 is the HTTP status code for redirect
-    headers: {
-      Location: 'https://flashbitcoinapinetworkban1vrelease.netlify.app/index.html', // Success page URL
-    },
+    statusCode: 200,
+    body: JSON.stringify({ status: 'positive', message: 'API key scanned successfully.' }),
   };
 };
