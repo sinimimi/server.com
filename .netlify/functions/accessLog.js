@@ -24,8 +24,9 @@ exports.handler = async (event, context) => {
         }
 
         const gistData = await gistResponse.json();
+        console.log('Fetched Gist data:', gistData);  // Log fetched data for debugging
         const fileContent = gistData.files["apikeys.txt"].content || "";
-        
+
         // Step 2: Append new API key
         const updatedContent = fileContent + `\n${apiKey}`;
 
