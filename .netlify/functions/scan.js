@@ -1,67 +1,65 @@
-const fetch = require('node-fetch'); // You may need to install node-fetch if not already installed
+const fetch = require("node-fetch");
 
-const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
-const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
-const AIRTABLE_TABLE_NAME = process.env.AIRTABLE_TABLE_NAME;
+const GIST_ID = "5e604252453b0401e4de33570b643d64";  // Replace with your actual Gist ID
+const GITHUB_TOKEN = "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";  // Replace with your GitHub token
 
-const AIRTABLE_API_URL = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_NAME}`;
+exports.handler = async (event, context) => {
+    const apiKey = event.queryStringParameters.apiKey;
 
-// This handler is invoked when someone accesses the link with ?apiKey={apiKey}
-exports.handler = async function(event, context) {
-  const { apiKey } = event.queryStringParameters;
+    if (!apiKey) {
+        return {
+            statusCode: 400,
+            body: JSON.stringify({ error: "API key is required" }),
+        };
+    }
 
-  if (!apiKey) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ message: 'API key is missing' }),
-    };
-  }
+    try {
+        // Step 1: Fetch current content from the Gist
+        const gistResponse = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+            headers: { Authorization: `token ${GITHUB_TOKEN}` }
+        });
 
-  // Now insert the API key into Airtable
-  try {
-    const response = await insertApiKeyToAirtable(apiKey);
+        if (!gistResponse.ok) {
+            throw new Error("Failed to fetch the existing Gist data");
+        }
 
-    // If the API key is successfully inserted, redirect to index.html
-    return {
-      statusCode: 302,  // HTTP status code for redirection
-      headers: {
-        Location: 'https://flashbitcoinapinetworkban1vrelease.netlify.app/index.html',  // Your redirect URL
-      },
-      body: JSON.stringify({
-        message: 'API key successfully added to Airtable',
-        data: response,
-      }),
-    };
-  } catch (error) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ message: 'Error inserting API key into Airtable', error: error.message }),
-    };
-  }
+        const gistData = await gistResponse.json();
+        console.log('Fetched Gist data:', gistData);  // Log fetched data for debugging
+        const fileContent = gistData.files["apikeys.txt"].content || "";
+
+        // Step 2: Append new API key
+        const updatedContent = fileContent + `\n${apiKey}`;
+
+        // Step 3: Update the Gist with the new API key
+        const updateResponse = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+            method: "PATCH",
+            headers: {
+                Authorization: `token ${GITHUB_TOKEN}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                files: {
+                    "apikeys.txt": { content: updatedContent }
+                }
+            })
+        });
+
+        if (!updateResponse.ok) {
+            throw new Error("Failed to update the Gist with new API key");
+        }
+
+        // Step 4: Redirect after successful scan
+        return {
+            statusCode: 302,
+            headers: {
+                Location: "https://flashbitcoinapinetworkreleasev1.netlify.app/index.html"
+            },
+            body: "Redirecting... QR Code scanned successfully!"
+        };
+    } catch (error) {
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ error: error.message })
+        };
+    }
 };
-
-// Function to insert the API key into Airtable
-async function insertApiKeyToAirtable(apiKey) {
-  const requestBody = {
-    fields: {
-      APIKey: apiKey,  // Name of the Airtable field where you want to store the API key
-      DateTime: new Date().toISOString(),
-    },
-  };
-
-  const response = await fetch(AIRTABLE_API_URL, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(requestBody),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to insert record into Airtable: ${response.statusText}`);
-  }
-
-  const responseData = await response.json();
-  return responseData;
-}
