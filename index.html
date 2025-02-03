@@ -68,10 +68,13 @@
 
         document.getElementById('connectButton').onclick = async () => {
             if (typeof window.ethereum !== 'undefined') {
-                provider = new ethers.providers.Web3Provider(window.ethereum);
-                await provider.send("eth_requestAccounts", []);
-                signer = provider.getSigner();
-                console.log('MetaMask connected');
+                // Initialize the provider only once
+                if (!provider) {
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
+                    await provider.send("eth_requestAccounts", []);
+                    signer = provider.getSigner();
+                    console.log('MetaMask connected');
+                }
             } else {
                 alert('MetaMask is not installed!');
             }
