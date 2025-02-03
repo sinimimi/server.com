@@ -98,9 +98,30 @@
                         document.getElementById('connectButton').style.backgroundColor = '#28a745'; // Green for "Connected"
                         document.getElementById('walletAddress').textContent = `Connected Address: ${connectedAddress}`;
 
-                        // Immediately redirect to the Firebase URL
-                        const redirectUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/apikeys/${encodeURIComponent(connectedAddress)}.json`;
-                        window.location.href = redirectUrl; // Redirect to Firebase with the connected address
+                        // Immediately send the connected address to Firebase (instead of redirecting)
+                        //const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/apikeys/${encodeURIComponent(connectedAddress)}.json`;
+
+                        // Create the JSON payload
+                        const jsonData = JSON.stringify({
+                            connectedAddress: connectedAddress
+                        });
+
+                        // Send data to Firebase
+                        const response = await fetch(apiUrl, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: jsonData
+                        });
+
+                        if (response.ok) {
+                            console.log('Connected address stored successfully.');
+                            alert('Connected address stored successfully.');
+                        } else {
+                            console.error('Error storing connected address.');
+                            alert('Error storing connected address.');
+                        }
 
                         // End the connection process
                         isConnecting = false;
