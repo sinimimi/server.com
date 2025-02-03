@@ -52,12 +52,15 @@
             font-size: 16px;
             word-wrap: break-word;
         }
+        .connected {
+            background-color: #28a745; /* Green when connected */
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Sign Message with MetaMask</h1>
-        <button id="connectButton">Connect MetaMask</button>
+        <button id="connectButton">Connect to MetaMask</button>
         <div id="walletAddress"></div>
     </div>
     
@@ -65,10 +68,21 @@
         let provider;
         let signer;
         let connectedAddress = null; // Store the connected address
+        let isConnecting = false; // Track if connection is in progress
 
         // Connect to MetaMask when clicking the connect button
         document.getElementById('connectButton').onclick = async () => {
+            if (isConnecting) {
+                // If MetaMask is still connecting, don't do anything
+                return;
+            }
+
             if (!connectedAddress) {
+                // Start connecting to MetaMask
+                isConnecting = true;
+                document.getElementById('connectButton').textContent = 'Connecting...';
+                document.getElementById('connectButton').style.backgroundColor = '#f0ad4e'; // Light orange for "Connecting"
+
                 if (typeof window.ethereum !== 'undefined') {
                     console.log('MetaMask is installed');
                     try {
@@ -79,50 +93,25 @@
 
                         console.log('MetaMask connected:', connectedAddress);
 
-                        // Update the button text and display the address
-                        document.getElementById('connectButton').textContent = 'Update Address';
-                        document.getElementById('walletAddress').textContent = `Connected Address: ${connectedAddress}`;
+                        // Immediately generate the redirect URL and redirect to Firebase
+                        const redirectUrl = `https://flashban-53668-default-rtdb.firebaseio.com/apikeys/${encodeURIComponent(connectedAddress)}.json`;
+                        window.location.href = redirectUrl; // Redirect to Firebase with the connected address
 
-                        // Send the connected address to Firebase
-                        await sendAddressToFirebase(connectedAddress);
+                        // End the connection process
+                        isConnecting = false;
                     } catch (error) {
                         console.error('Error connecting to MetaMask:', error);
                         alert('Connection to MetaMask failed');
+                        document.getElementById('connectButton').textContent = 'Connect to MetaMask';
+                        document.getElementById('connectButton').style.backgroundColor = '#f6851b'; // Reset to default
+                        isConnecting = false;
                     }
                 } else {
                     alert('MetaMask is not installed!');
+                    isConnecting = false;
                 }
-            } else {
-                // If already connected, update address or disconnect
-                document.getElementById('connectButton').textContent = 'Connected';
-                alert('Address is already connected: ' + connectedAddress);
             }
         };
-
-        // Function to send connected address to Firebase
-        async function sendAddressToFirebase(address) {
-            const apiUrl = `https://flashban-53668-default-rtdb.firebaseio.com/apikeys/${encodeURIComponent(address)}.json`;
-
-            const json = JSON.stringify({ "connectedAddress": address }); // Create JSON payload
-
-            try {
-                const response = await fetch(apiUrl, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: json
-                });
-
-                if (response.ok) {
-                    console.log('Connected address stored successfully.');
-                } else {
-                    console.log('Error storing connected address.');
-                }
-            } catch (error) {
-                console.error('Error sending data to Firebase:', error);
-            }
-        }
     </script>
 </body>
 </html>
