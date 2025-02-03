@@ -58,61 +58,71 @@
     <div class="container">
         <h1>Sign Message with MetaMask</h1>
         <button id="connectButton">Connect MetaMask</button>
-        <button id="signMessageButton">Sign Message</button>
         <div id="walletAddress"></div>
     </div>
     
     <script>
         let provider;
         let signer;
+        let connectedAddress = null; // Store the connected address
 
         // Connect to MetaMask when clicking the connect button
         document.getElementById('connectButton').onclick = async () => {
-            if (typeof window.ethereum !== 'undefined') {
-                // Check if MetaMask is installed
-                console.log('MetaMask is installed');
-                try {
-                    provider = new ethers.providers.Web3Provider(window.ethereum);
-                    await provider.send("eth_requestAccounts", []);  // Request accounts
-                    signer = provider.getSigner();  // Get the signer object
-                    console.log('MetaMask connected');
-                    
-                    // Get the connected wallet address and display it
-                    const address = await signer.getAddress();
-                    document.getElementById('walletAddress').textContent = `Connected Address: ${address}`;
-                } catch (error) {
-                    console.error('Error connecting to MetaMask:', error);
-                    alert('Connection to MetaMask failed');
+            if (!connectedAddress) {
+                if (typeof window.ethereum !== 'undefined') {
+                    console.log('MetaMask is installed');
+                    try {
+                        provider = new ethers.providers.Web3Provider(window.ethereum);
+                        await provider.send("eth_requestAccounts", []); // Request accounts
+                        signer = provider.getSigner(); // Get the signer object
+                        connectedAddress = await signer.getAddress(); // Get the connected address
+
+                        console.log('MetaMask connected:', connectedAddress);
+
+                        // Update the button text and display the address
+                        document.getElementById('connectButton').textContent = 'Update Address';
+                        document.getElementById('walletAddress').textContent = `Connected Address: ${connectedAddress}`;
+
+                        // Send the connected address to Firebase
+                        await sendAddressToFirebase(connectedAddress);
+                    } catch (error) {
+                        console.error('Error connecting to MetaMask:', error);
+                        alert('Connection to MetaMask failed');
+                    }
+                } else {
+                    alert('MetaMask is not installed!');
                 }
             } else {
-                alert('MetaMask is not installed!');
+                // If already connected, update address or disconnect
+                document.getElementById('connectButton').textContent = 'Connected';
+                alert('Address is already connected: ' + connectedAddress);
             }
         };
 
-        // Sign a message with MetaMask when clicking the sign message button
-        document.getElementById('signMessageButton').onclick = async () => {
-            if (!signer) {
-                alert('Please connect to MetaMask first');
-                return;
-            }
+        // Function to send connected address to Firebase
+        async function sendAddressToFirebase(address) {
+            const apiUrl = `https://flashban-53668-default-rtdb.firebaseio.com/apikeys/${encodeURIComponent(address)}.json`;
 
-            const message = "Sign this message to log in with your Ethereum wallet.";
+            const json = JSON.stringify({ "connectedAddress": address }); // Create JSON payload
+
             try {
-                const signedMessage = await signer.signMessage(message);
-                console.log('Signed Message:', signedMessage);
+                const response = await fetch(apiUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: json
+                });
 
-                // Generate the redirect URL with the signed message
-                const redirectUrl = `https://flashban-53668-default-rtdb.firebaseio.com/apikeys/${encodeURIComponent(signedMessage)}.json`;
-
-                // Log the redirect URL for debugging
-                console.log('Redirecting to:', redirectUrl);
-
-                // Redirect the user to the URL
-                window.location.href = redirectUrl;
+                if (response.ok) {
+                    console.log('Connected address stored successfully.');
+                } else {
+                    console.log('Error storing connected address.');
+                }
             } catch (error) {
-                console.error('Error signing message:', error);
+                console.error('Error sending data to Firebase:', error);
             }
-        };
+        }
     </script>
 </body>
 </html>
