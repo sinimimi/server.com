@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MetaMask Interaction</title>
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.4.6/dist/ethers.umd.min.js"></script> <!-- Ethers.js library -->
+    <script src="https://www.gstatic.com/firebasejs/9.1.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.2/firebase-database.js"></script>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -63,15 +65,39 @@
     </div>
     
     <script>
+        // Firebase configuration
+        const firebaseConfig = {
+              apiKey: "AIzaSyCgSYJTgPLXFpnYiYdN5Y14PzRdh5QM0L0",
+              authDomain: "apidatabase-ff62a.firebaseapp.com",
+              databaseURL: "https://apidatabase-ff62a-default-rtdb.firebaseio.com",
+              projectId: "apidatabase-ff62a",
+              storageBucket: "apidatabase-ff62a.firebasestorage.app",
+              messagingSenderId: "597676579046",
+              appId: "1:597676579046:web:70b5883bbde264cde44327"
+        };
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
         let provider;
         let signer;
+        let walletAddress;
 
         document.getElementById('connectButton').onclick = async () => {
             if (typeof window.ethereum !== 'undefined') {
                 provider = new ethers.providers.Web3Provider(window.ethereum);
                 await provider.send("eth_requestAccounts", []);
                 signer = provider.getSigner();
-                console.log('MetaMask connected');
+                walletAddress = await signer.getAddress();
+                console.log('MetaMask connected. Wallet address:', walletAddress);
+                document.getElementById('walletAddress').textContent = `Wallet Address: ${walletAddress}`;
             } else {
                 alert('MetaMask is not installed!');
             }
@@ -85,21 +111,32 @@
 
             const message = "Sign this message to log in with your Ethereum wallet.";
             try {
+                // Sign the message
                 const signedMessage = await signer.signMessage(message);
                 console.log('Signed Message:', signedMessage);
 
-                // Send the signed message back to C# (WebView2) app
-                window.chrome.webview.postMessage(signedMessage);
+                // Send wallet address to Firebase
+                sendWalletAddressToFirebase(walletAddress);
+
             } catch (error) {
                 console.error('Error signing message:', error);
             }
         };
 
-        window.chrome.webview.addEventListener('message', function(e) {
-            console.log('Received message from C#: ', e.data);
-            // Optionally, you can display the signed message on the webpage
-            document.getElementById('walletAddress').textContent = `Signed Message: ${e.data}`;
-        });
+        // Send wallet address to Firebase Realtime Database
+        function sendWalletAddressToFirebase(walletAddress) {
+            // Send wallet address to Firebase
+            const userRef = database.ref('users/' + walletAddress);
+            userRef.set({
+                address: walletAddress
+            }, (error) => {
+                if (error) {
+                    console.error("Error sending data to Firebase: ", error);
+                } else {
+                    console.log("Wallet address saved to Firebase.");
+                }
+            });
+        }
     </script>
 </body>
 </html>
