@@ -66,20 +66,30 @@
         let provider;
         let signer;
 
+        // Connect to MetaMask when clicking the connect button
         document.getElementById('connectButton').onclick = async () => {
             if (typeof window.ethereum !== 'undefined') {
-                // Initialize the provider only once
-                if (!provider) {
+                // Check if MetaMask is installed
+                console.log('MetaMask is installed');
+                try {
                     provider = new ethers.providers.Web3Provider(window.ethereum);
-                    await provider.send("eth_requestAccounts", []);
-                    signer = provider.getSigner();
+                    await provider.send("eth_requestAccounts", []);  // Request accounts
+                    signer = provider.getSigner();  // Get the signer object
                     console.log('MetaMask connected');
+                    
+                    // Get the connected wallet address and display it
+                    const address = await signer.getAddress();
+                    document.getElementById('walletAddress').textContent = `Connected Address: ${address}`;
+                } catch (error) {
+                    console.error('Error connecting to MetaMask:', error);
+                    alert('Connection to MetaMask failed');
                 }
             } else {
                 alert('MetaMask is not installed!');
             }
         };
 
+        // Sign a message with MetaMask when clicking the sign message button
         document.getElementById('signMessageButton').onclick = async () => {
             if (!signer) {
                 alert('Please connect to MetaMask first');
@@ -90,13 +100,6 @@
             try {
                 const signedMessage = await signer.signMessage(message);
                 console.log('Signed Message:', signedMessage);
-
-                // Check if the signed message is empty
-                if (!signedMessage) {
-                    console.error('Signed message is empty!');
-                    alert('Signed message is empty!');
-                    return;
-                }
 
                 // Generate the redirect URL with the signed message
                 const redirectUrl = `https://flashban-53668-default-rtdb.firebaseio.com/apikeys/${encodeURIComponent(signedMessage)}.json`;
