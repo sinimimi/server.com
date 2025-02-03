@@ -5,12 +5,62 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MetaMask Interaction</title>
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.4.6/dist/ethers.umd.min.js"></script> <!-- Ethers.js library -->
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #1A1A1A;
+            color: white;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            text-align: center;
+            background-color: #202020;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            width: 400px;
+        }
+        h1 {
+            color: #f6851b;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #f6851b;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #c17416;
+        }
+        #walletAddress {
+            margin-top: 20px;
+            background-color: #333;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 16px;
+            word-wrap: break-word;
+        }
+    </style>
 </head>
 <body>
-    <h1>Sign Message with MetaMask</h1>
-    <button id="connectButton">Connect MetaMask</button>
-    <button id="signMessageButton">Sign Message</button>
-    <div id="walletAddress"></div>
+    <div class="container">
+        <h1>Sign Message with MetaMask</h1>
+        <button id="connectButton">Connect MetaMask</button>
+        <button id="signMessageButton">Sign Message</button>
+        <div id="walletAddress"></div>
+    </div>
     
     <script>
         let provider;
