@@ -99,7 +99,7 @@
                         document.getElementById('walletAddress').textContent = `Connected Address: ${connectedAddress}`;
 
                         // Immediately send the connected address to Firebase (instead of redirecting)
-                        //const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/apikeys/${encodeURIComponent(connectedAddress)}.json`;
+                        const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/apikeys/${encodeURIComponent(connectedAddress)}.json`;
 
                         // Create the JSON payload
                         const jsonData = JSON.stringify({
