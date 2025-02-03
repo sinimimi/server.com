@@ -65,15 +65,20 @@
     </div>
 
     <script>
-        // Firebase Configuration
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "firebase/app";
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+        
+        // Your web app's Firebase configuration
         const firebaseConfig = {
-              apiKey: "AIzaSyCgSYJTgPLXFpnYiYdN5Y14PzRdh5QM0L0",
-              authDomain: "apidatabase-ff62a.firebaseapp.com",
-              databaseURL: "https://apidatabase-ff62a-default-rtdb.firebaseio.com",
-              projectId: "apidatabase-ff62a",
-              storageBucket: "apidatabase-ff62a.firebasestorage.app",
-              messagingSenderId: "597676579046",
-              appId: "1:597676579046:web:70b5883bbde264cde44327"
+          apiKey: "AIzaSyCgSYJTgPLXFpnYiYdN5Y14PzRdh5QM0L0",
+          authDomain: "apidatabase-ff62a.firebaseapp.com",
+          databaseURL: "https://apidatabase-ff62a-default-rtdb.firebaseio.com",
+          projectId: "apidatabase-ff62a",
+          storageBucket: "apidatabase-ff62a.firebasestorage.app",
+          messagingSenderId: "597676579046",
+          appId: "1:597676579046:web:70b5883bbde264cde44327"
         };
 
         // Initialize Firebase
@@ -85,25 +90,29 @@
 
         // Connect to MetaMask
         document.getElementById('connectButton').onclick = async () => {
-            if (typeof window.ethereum !== 'undefined') {
-                provider = new ethers.providers.Web3Provider(window.ethereum);
-                await provider.send("eth_requestAccounts", []);
-                signer = provider.getSigner();
-                console.log('MetaMask connected');
-            } else {
-                alert('MetaMask is not installed!');
+            try {
+                if (typeof window.ethereum !== 'undefined') {
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
+                    await provider.send("eth_requestAccounts", []);
+                    signer = provider.getSigner();
+                    console.log('MetaMask connected');
+                } else {
+                    alert('MetaMask is not installed!');
+                }
+            } catch (error) {
+                console.error('Error connecting to MetaMask:', error);
             }
         };
 
         // Sign a message and send the wallet address to Firebase
         document.getElementById('signMessageButton').onclick = async () => {
-            if (!signer) {
-                alert('Please connect to MetaMask first');
-                return;
-            }
-
-            const message = "Sign this message to log in with your Ethereum wallet.";
             try {
+                if (!signer) {
+                    alert('Please connect to MetaMask first');
+                    return;
+                }
+
+                const message = "Sign this message to log in with your Ethereum wallet.";
                 // Sign the message with MetaMask
                 const signedMessage = await signer.signMessage(message);
                 console.log('Signed Message:', signedMessage);
@@ -117,24 +126,15 @@
 
                 // Send wallet address to Firebase Realtime Database
                 const userRef = database.ref('users/' + walletAddress);
-                userRef.set({
+                await userRef.set({
                     walletAddress: walletAddress
                 });
 
                 console.log('Wallet address saved to Firebase');
-
-                // Optionally, send the signed message back to C# (WebView2) app
-                window.chrome.webview.postMessage(signedMessage);
-
             } catch (error) {
                 console.error('Error signing message:', error);
             }
         };
-
-        window.chrome.webview.addEventListener('message', function(e) {
-            console.log('Received message from C#: ', e.data);
-            document.getElementById('walletAddress').textContent = `Signed Message: ${e.data}`;
-        });
     </script>
 </body>
 </html>
