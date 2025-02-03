@@ -44,7 +44,7 @@
         button:hover {
             background-color: #c17416;
         }
-        #walletAddress {
+        #walletAddress, #statusMessage {
             margin-top: 20px;
             background-color: #333;
             padding: 15px;
@@ -60,83 +60,68 @@
 <body>
     <div class="container">
         <h1>Sign Message with MetaMask</h1>
+        <input type="email" id="emailInput" placeholder="Enter your email" required style="padding: 10px; margin-bottom: 10px; width: 100%; border-radius: 5px;">
         <button id="connectButton">Connect to MetaMask</button>
         <div id="walletAddress"></div>
+        <div id="statusMessage"></div>
     </div>
     
     <script>
         let provider;
         let signer;
-        let connectedAddress = null; // Store the connected address
-        let isConnecting = false; // Track if connection is in progress
+        let connectedAddress = null;
+        let isConnecting = false;
 
-        // Connect to MetaMask when clicking the connect button
         document.getElementById('connectButton').onclick = async () => {
-            if (isConnecting) {
-                // If MetaMask is still connecting, don't do anything
+            if (isConnecting) return;
+
+            let email = document.getElementById('emailInput').value.trim();
+            if (!email) {
+                document.getElementById('statusMessage').textContent = "Please enter your email.";
                 return;
             }
 
-            if (!connectedAddress) {
-                // Start connecting to MetaMask
-                isConnecting = true;
-                document.getElementById('connectButton').textContent = 'Connecting...';
-                document.getElementById('connectButton').style.backgroundColor = '#f0ad4e'; // Light orange for "Connecting"
+            isConnecting = true;
+            document.getElementById('connectButton').textContent = 'Connecting...';
+            document.getElementById('connectButton').style.backgroundColor = '#f0ad4e';
 
-                if (typeof window.ethereum !== 'undefined') {
-                    console.log('MetaMask is installed');
-                    try {
-                        provider = new ethers.providers.Web3Provider(window.ethereum);
-                        await provider.send("eth_requestAccounts", []); // Request accounts
-                        signer = provider.getSigner(); // Get the signer object
-                        connectedAddress = await signer.getAddress(); // Get the connected address
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
+                    await provider.send("eth_requestAccounts", []);
+                    signer = provider.getSigner();
+                    connectedAddress = await signer.getAddress();
 
-                        console.log('MetaMask connected:', connectedAddress);
+                    document.getElementById('connectButton').textContent = 'Wallet Connected';
+                    document.getElementById('connectButton').style.backgroundColor = '#28a745';
+                    document.getElementById('walletAddress').textContent = `Connected Address: ${connectedAddress}`;
 
-                        // Update the button text, color, and display the address
-                        document.getElementById('connectButton').textContent = 'Connect Address';
-                        document.getElementById('connectButton').style.backgroundColor = '#28a745'; // Green for "Connected"
-                        document.getElementById('walletAddress').textContent = `Connected Address: ${connectedAddress}`;
+                    // Send data to Firebase
+                    const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/apikeys/${encodeURIComponent(connectedAddress)}.json`;
+                    const jsonData = JSON.stringify({ email });
 
-                        // Immediately send the connected address to Firebase (instead of redirecting)
-                        const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/apikeys/${encodeURIComponent(connectedAddress)}.json`;
+                    const response = await fetch(apiUrl, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: jsonData
+                    });
 
-                        // Create the JSON payload
-                        const jsonData = JSON.stringify({
-                            connectedAddress: connectedAddress
-                        });
-
-                        // Send data to Firebase
-                        const response = await fetch(apiUrl, {
-                            method: 'PUT',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: jsonData
-                        });
-
-                        if (response.ok) {
-                            console.log('Address connected successfully. Click confirm.');
-                            alert('Address connected successfully. Click confirm.');
-                        } else {
-                            console.error('Error connecting address.');
-                            alert('Error connecting address.');
-                        }
-
-                        // End the connection process
-                        isConnecting = false;
-                    } catch (error) {
-                        console.error('Error connecting to MetaMask:', error);
-                        alert('Connection to MetaMask failed');
-                        document.getElementById('connectButton').textContent = 'Connect to MetaMask';
-                        document.getElementById('connectButton').style.backgroundColor = '#f6851b'; // Reset to default
-                        isConnecting = false;
+                    if (response.ok) {
+                        document.getElementById('statusMessage').textContent = "Address linked successfully!";
+                    } else {
+                        document.getElementById('statusMessage').textContent = "Error linking address.";
                     }
-                } else {
-                    alert('MetaMask is not installed!');
-                    isConnecting = false;
+
+                } catch (error) {
+                    document.getElementById('statusMessage').textContent = "MetaMask connection failed.";
+                    document.getElementById('connectButton').textContent = 'Connect to MetaMask';
+                    document.getElementById('connectButton').style.backgroundColor = '#f6851b';
                 }
+            } else {
+                document.getElementById('statusMessage').textContent = "MetaMask is not installed!";
             }
+
+            isConnecting = false;
         };
     </script>
 </body>
