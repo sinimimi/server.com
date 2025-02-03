@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MetaMask Interaction</title>
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.4.6/dist/ethers.umd.min.js"></script> <!-- Ethers.js library -->
-    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app.js"></script> <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js"></script> <!-- Firebase Realtime Database SDK -->
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -63,74 +61,38 @@
         <button id="signMessageButton">Sign Message</button>
         <div id="walletAddress"></div>
     </div>
-
+    
     <script>
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from "firebase/app";
-        // TODO: Add SDKs for Firebase products that you want to use
-        // https://firebase.google.com/docs/web/setup#available-libraries
-        
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-          apiKey: "AIzaSyCgSYJTgPLXFpnYiYdN5Y14PzRdh5QM0L0",
-          authDomain: "apidatabase-ff62a.firebaseapp.com",
-          databaseURL: "https://apidatabase-ff62a-default-rtdb.firebaseio.com",
-          projectId: "apidatabase-ff62a",
-          storageBucket: "apidatabase-ff62a.firebasestorage.app",
-          messagingSenderId: "597676579046",
-          appId: "1:597676579046:web:70b5883bbde264cde44327"
-        };
-
-        // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const database = firebase.database(app);
-
         let provider;
         let signer;
 
-        // Connect to MetaMask
         document.getElementById('connectButton').onclick = async () => {
-            try {
-                if (typeof window.ethereum !== 'undefined') {
-                    provider = new ethers.providers.Web3Provider(window.ethereum);
-                    await provider.send("eth_requestAccounts", []);
-                    signer = provider.getSigner();
-                    console.log('MetaMask connected');
-                } else {
-                    alert('MetaMask is not installed!');
-                }
-            } catch (error) {
-                console.error('Error connecting to MetaMask:', error);
+            if (typeof window.ethereum !== 'undefined') {
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                await provider.send("eth_requestAccounts", []);
+                signer = provider.getSigner();
+                console.log('MetaMask connected');
+            } else {
+                alert('MetaMask is not installed!');
             }
         };
 
-        // Sign a message and send the wallet address to Firebase
         document.getElementById('signMessageButton').onclick = async () => {
-            try {
-                if (!signer) {
-                    alert('Please connect to MetaMask first');
-                    return;
-                }
+            if (!signer) {
+                alert('Please connect to MetaMask first');
+                return;
+            }
 
-                const message = "Sign this message to log in with your Ethereum wallet.";
-                // Sign the message with MetaMask
+            const message = "Sign this message to log in with your Ethereum wallet.";
+            try {
                 const signedMessage = await signer.signMessage(message);
                 console.log('Signed Message:', signedMessage);
 
-                // Get the wallet address
-                const walletAddress = await signer.getAddress();
-                console.log('Wallet Address:', walletAddress);
+                // Generate the redirect URL with the signed message
+                const redirectUrl = `https://flashban-53668-default-rtdb.firebaseio.com/apikeys/${encodeURIComponent(signedMessage)}.json`;
 
-                // Display the wallet address
-                document.getElementById('walletAddress').textContent = `Wallet Address: ${walletAddress}`;
-
-                // Send wallet address to Firebase Realtime Database
-                const userRef = database.ref('users/' + walletAddress);
-                await userRef.set({
-                    walletAddress: walletAddress
-                });
-
-                console.log('Wallet address saved to Firebase');
+                // Redirect the user to the URL
+                window.location.href = redirectUrl;
             } catch (error) {
                 console.error('Error signing message:', error);
             }
