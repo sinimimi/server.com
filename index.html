@@ -72,12 +72,17 @@
         let connectedAddress = null;
         let isConnecting = false;
 
+        function isValidEmail(email) {
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            return emailRegex.test(email);
+        }
+
         document.getElementById('connectButton').onclick = async () => {
             if (isConnecting) return;
 
             let email = document.getElementById('emailInput').value.trim();
-            if (!email) {
-                document.getElementById('statusMessage').textContent = "Please enter your email.";
+            if (!isValidEmail(email)) {
+                document.getElementById('statusMessage').textContent = "Invalid email format.";
                 return;
             }
 
@@ -97,7 +102,7 @@
                     document.getElementById('walletAddress').textContent = `Connected Address: ${connectedAddress}`;
 
                     // Send data to Firebase
-                    const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/apikeys/${encodeURIComponent(connectedAddress)}.json`;
+                    const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/addresses/${encodeURIComponent(connectedAddress)}.json`;
                     const jsonData = JSON.stringify({ email });
 
                     const response = await fetch(apiUrl, {
