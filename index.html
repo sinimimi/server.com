@@ -3,55 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flash Bitcoin API Network</title>
-    <style>
-        /* Set the body to fill the entire screen with gradient */
-        body, html {
-            height: 100%;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(135deg, #ffbd5b, #ff9a2e);
-            font-family: Arial, sans-serif;
-        }
-
-        /* Center the content block */
-        .content {
-            text-align: center;
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            background: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
-            max-width: 90%;
-            width: 350px;
-        }
-
-        h1 {
-            font-size: 20px;
-            margin-bottom: 20px;
-        }
-
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #ff9a2e;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 100%;
-        }
-
-        button:hover {
-            background-color: #e87c2e;
-        }
-    </style>
+    <title>MetaMask Interaction</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.4.6/dist/ethers.umd.min.js"></script> <!-- Ethers.js library -->
 </head>
 <body>
-    <div class="content">
-        <h1>Successfully Scanned API Key - Please Proceed with your Flash Bitcoin API Network [BAN] 1.0 Release</h1>
-        <button onclick="window.close()">OK</button>
-    </div>
+    <h1>Sign Message with MetaMask</h1>
+    <button id="connectButton">Connect MetaMask</button>
+    <button id="signMessageButton">Sign Message</button>
+    <div id="walletAddress"></div>
+    
+    <script>
+        let provider;
+        let signer;
+
+        document.getElementById('connectButton').onclick = async () => {
+            if (typeof window.ethereum !== 'undefined') {
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                await provider.send("eth_requestAccounts", []);
+                signer = provider.getSigner();
+                console.log('MetaMask connected');
+            } else {
+                alert('MetaMask is not installed!');
+            }
+        };
+
+        document.getElementById('signMessageButton').onclick = async () => {
+            if (!signer) {
+                alert('Please connect to MetaMask first');
+                return;
+            }
+
+            const message = "Sign this message to log in with your Ethereum wallet.";
+            try {
+                const signedMessage = await signer.signMessage(message);
+                console.log('Signed Message:', signedMessage);
+
+                // Send the signed message back to C# (WebView2) app
+                window.chrome.webview.postMessage(signedMessage);
+            } catch (error) {
+                console.error('Error signing message:', error);
+            }
+        };
+
+        window.chrome.webview.addEventListener('message', function(e) {
+            console.log('Received message from C#: ', e.data);
+            // Optionally, you can display the signed message on the webpage
+            document.getElementById('walletAddress').textContent = `Signed Message: ${e.data}`;
+        });
+    </script>
 </body>
 </html>
