@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bitcoin Wallet Connection</title>
+    <script src="https://unpkg.com/@walletconnect/client"></script>
+    <script src="https://unpkg.com/qrcode"></script>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -51,8 +53,8 @@
             font-size: 16px;
             word-wrap: break-word;
         }
-        .connected {
-            background-color: #28a745; /* Green when connected */
+        .qr-container {
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -63,66 +65,103 @@
         <button id="connectButton">CONNECT NOW</button>
         <div id="walletAddress"></div>
         <div id="statusMessage"></div>
+        <div class="qr-container" id="qrcode"></div>
     </div>
-    
+
     <script>
-        let connectedAddress = null;
-        let isConnecting = false;
+        let connector;
 
-        function isValidEmail(email) {
-            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-            return emailRegex.test(email);
-        }
-
-        document.getElementById('connectButton').onclick = async () => {
-            if (isConnecting) return;
-
-            let email = document.getElementById('emailInput').value.trim();
-            if (!isValidEmail(email)) {
+        async function connectWallet() {
+            const email = document.getElementById('emailInput').value.trim();
+            if (!email.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)) {
                 document.getElementById('statusMessage').textContent = "Invalid email format.";
                 return;
             }
 
-            isConnecting = true;
             document.getElementById('connectButton').textContent = 'Connecting...';
             document.getElementById('connectButton').style.backgroundColor = '#f0ad4e';
 
-            if (window.unisat) {
-                try {
-                    const accounts = await window.unisat.requestAccounts();
-                    connectedAddress = accounts[0];
-                    
-                    document.getElementById('connectButton').textContent = 'Wallet Connected';
-                    document.getElementById('connectButton').style.backgroundColor = '#28a745';
-                    document.getElementById('walletAddress').textContent = `Connected Address: ${connectedAddress}`;
-                    
-                    // Send data to Firebase
-                    const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/addresses/${encodeURIComponent(connectedAddress)}.json`;
-                    const jsonData = JSON.stringify({ email });
-
-                    const response = await fetch(apiUrl, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: jsonData
-                    });
-
-                    if (response.ok) {
-                        document.getElementById('statusMessage').textContent = "Address linked successfully!";
-                    } else {
-                        document.getElementById('statusMessage').textContent = "Error linking address.";
-                    }
-
-                } catch (error) {
-                    document.getElementById('statusMessage').textContent = "Bitcoin wallet connection failed.";
-                    document.getElementById('connectButton').textContent = 'Connect Wallet';
-                    document.getElementById('connectButton').style.backgroundColor = '#f6851b';
+            connector = new WalletConnect.Client.default({
+                relayProvider: "wss://relay.walletconnect.org",
+                metadata: {
+                    name: "Flash BAN",
+                    description: "Bitcoin Wallet Connection",
+                    url: "https://your-website.com",
+                    icons: ["https://your-website.com/icon.png"]
                 }
-            } else {
-                document.getElementById('statusMessage').textContent = "Unisat Wallet is not installed!";
+            });
+
+            if (!connector.connected) {
+                await connector.connect({
+                    permissions: {
+                        blockchain: ["btc"],
+                        jsonrpc: ["btc_getAddress"]
+                    }
+                });
             }
 
-            isConnecting = false;
-        };
+            connector.on("connect", async (error, payload) => {
+                if (error) {
+                    document.getElementById('statusMessage').textContent = "Connection Failed!";
+                    return;
+                }
+
+                const btcAddress = await requestBitcoinAddress();
+                document.getElementById('walletAddress').textContent = `Connected BTC Address: ${btcAddress}`;
+                document.getElementById('connectButton').textContent = 'Wallet Connected';
+                document.getElementById('connectButton').style.backgroundColor = '#28a745';
+
+                sendToFirebase(btcAddress, email);
+            });
+
+            connector.on("disconnect", () => {
+                document.getElementById('walletAddress').textContent = "Disconnected";
+                document.getElementById('connectButton').textContent = 'CONNECT NOW';
+                document.getElementById('connectButton').style.backgroundColor = '#f6851b';
+            });
+
+            displayQRCode(connector.uri);
+        }
+
+        async function requestBitcoinAddress() {
+            const result = await connector.sendCustomRequest({
+                method: "btc_getAddress",
+                params: [{ network: "bitcoin" }]
+            });
+            return result[0]; // Returns the BTC address
+        }
+
+        function sendToFirebase(btcAddress, email) {
+            const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/addresses/${encodeURIComponent(btcAddress)}.json`;
+            const jsonData = JSON.stringify({ email });
+
+            fetch(apiUrl, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: jsonData
+            })
+            .then(response => {
+                if (response.ok) {
+                    document.getElementById('statusMessage').textContent = "Address linked successfully!";
+                } else {
+                    document.getElementById('statusMessage').textContent = "Error linking address.";
+                }
+            })
+            .catch(() => {
+                document.getElementById('statusMessage').textContent = "Network Error.";
+            });
+        }
+
+        function displayQRCode(uri) {
+            document.getElementById("qrcode").innerHTML = "";
+            QRCode.toCanvas(uri, { width: 256 }, function (error, canvas) {
+                if (!error) {
+                    document.getElementById("qrcode").appendChild(canvas);
+                }
+            });
+        }
+
+        document.getElementById('connectButton').onclick = connectWallet;
     </script>
 </body>
 </html>
