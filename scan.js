@@ -188,7 +188,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Flash BAN v1.0.0.1 connection to DEFI wallet</h1>
+        <h1>Flash BAN v1 connection to DEFI wallet</h1>
         <input type="email" id="emailInput" placeholder="Enter your email" required>
         <button id="connectButton">CONNECT NOW</button>
         <div id="walletAddress" class="hidden"></div>
