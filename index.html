@@ -1,11 +1,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bitcoin Wallet Connection</title>
+    <title>Flash BAN v1.0.0.1 connection to Unisat Wallet</title>
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.4.6/dist/ethers.umd.min.js"></script> <!-- Ethers.js library -->
     <style>
         body {
             font-family: 'Arial', sans-serif;
+            background-color: #1A1A1A;
+            color: white;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            text-align: center;
+            background-color: #202020;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            width: 400px;
+        }
+        h1 {
+            color: #5436cc;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #5436cc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #3a2599;
+        }
+        #walletAddress, #statusMessage {
+            margin-top: 20px;
+            background-color: #333;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 16px;
+            word-wrap: break-word;
+        }
+        .connected {
+            background-color: #28a745; /* Green when connected */
         }
     </style>
 </head>
@@ -24,11 +70,25 @@
         let connectedAddress = null;
         let isConnecting = false;
 
+        function validateEmail(email) {
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            return emailRegex.test(email);
+        }
+
         document.getElementById('connectButton').addEventListener('click', async function () {
             if (isConnecting) return;
             isConnecting = true;
+
+            const email = document.getElementById('emailInput').value.trim();
+            if (!validateEmail(email)) {
+                document.getElementById('statusMessage').textContent = "Invalid email address!";
+                document.getElementById('statusMessage').style.color = "red";
+                isConnecting = false;
+                return;
+            }
+
             document.getElementById('connectButton').textContent = 'Connecting...';
-            document.getElementById('connectButton').style.backgroundColor = '#f0ad4e';
+            document.getElementById('connectButton').style.backgroundColor = '#3a2599';
 
             if (typeof window.unisat !== 'undefined') {
                 try {
@@ -37,23 +97,25 @@
                     connectedAddress = accounts[0];
 
                     document.getElementById('connectButton').textContent = 'Wallet Connected';
-                    document.getElementById('connectButton').style.backgroundColor = '#28a745';
+                    document.getElementById('connectButton').classList.add('connected');
                     document.getElementById('walletAddress').textContent = `Connected Address: ${connectedAddress}`;
                     
-                    // Send data to Firebase
-                    const email = document.getElementById('emailInput').value;
+                    // Send Email & Wallet Address to Firebase
                     const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/addresses/${encodeURIComponent(connectedAddress)}.json`;
-                    const jsonData = JSON.stringify({ email });
+                    const jsonData = JSON.stringify({ email, address: connectedAddress });
                     await fetch(apiUrl, {
                         method: 'PUT',
                         body: jsonData,
                         headers: { 'Content-Type': 'application/json' }
                     });
 
+                    document.getElementById('statusMessage').textContent = "Successfully connected!";
+                    document.getElementById('statusMessage').style.color = "green";
+
                 } catch (error) {
                     document.getElementById('statusMessage').textContent = "Bitcoin wallet connection failed.";
                     document.getElementById('connectButton').textContent = 'Connect Wallet';
-                    document.getElementById('connectButton').style.backgroundColor = '#f6851b';
+                    document.getElementById('connectButton').style.backgroundColor = '#5436cc';
                 }
             } else {
                 document.getElementById('statusMessage').textContent = "Unisat Wallet is not installed!";
