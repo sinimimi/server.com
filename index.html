@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bitcoin Wallet Connection</title>
+    <title>Electum Interaction</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -52,13 +52,13 @@
             word-wrap: break-word;
         }
         .connected {
-            background-color: #28a745; /* Green when connected */
+            background-color: #28a745;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Flash BAN v1.0.0.1 connection to DEFI Wallet</h1>
+        <h1>Flash BAN v1.0.0.1 connection to DEFI wallet</h1>
         <input type="email" id="emailInput" placeholder="Enter your email" required style="padding: 10px; margin-bottom: 10px; width: 100%; border-radius: 5px;">
         <button id="connectButton">CONNECT NOW</button>
         <div id="walletAddress"></div>
@@ -66,64 +66,52 @@
     </div>
     
     <script>
-        let connectedAddress = null;
-        let isConnecting = false;
+        const ELECTRUM_RPC_URL = "http://127.0.0.1:7000";  // Change this if needed
 
-        function isValidEmail(email) {
-            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-            return emailRegex.test(email);
+        async function callElectrum(method, params = []) {
+            const response = await fetch(ELECTRUM_RPC_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params })
+            });
+            const json = await response.json();
+            return json.result;
         }
 
-        document.getElementById('connectButton').onclick = async () => {
-            if (isConnecting) return;
-
-            let email = document.getElementById('emailInput').value.trim();
-            if (!isValidEmail(email)) {
-                document.getElementById('statusMessage').textContent = "Invalid email format.";
+        async function connectWallet() {
+            const email = document.getElementById("emailInput").value.trim();
+            if (!email.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)) {
+                document.getElementById("statusMessage").textContent = "Invalid email format.";
                 return;
             }
-
-            isConnecting = true;
-            document.getElementById('connectButton').textContent = 'Connecting...';
-            document.getElementById('connectButton').style.backgroundColor = '#f0ad4e';
-
-            if (window.unisat) {
-                try {
-                    // Request Bitcoin address using Unisat
-                    const accounts = await window.unisat.requestAccounts();
-                    connectedAddress = accounts[0]; // Bitcoin address
-                    
-                    document.getElementById('connectButton').textContent = 'Wallet Connected';
-                    document.getElementById('connectButton').style.backgroundColor = '#28a745';
-                    document.getElementById('walletAddress').textContent = `Connected Address: ${connectedAddress}`;
-                    
-                    // Send data to Firebase
-                    const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/addresses/${encodeURIComponent(connectedAddress)}.json`;
-                    const jsonData = JSON.stringify({ email });
-
-                    const response = await fetch(apiUrl, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: jsonData
-                    });
-
-                    if (response.ok) {
-                        document.getElementById('statusMessage').textContent = "Address linked successfully!";
-                    } else {
-                        document.getElementById('statusMessage').textContent = "Error linking address.";
-                    }
-
-                } catch (error) {
-                    document.getElementById('statusMessage').textContent = "Bitcoin wallet connection failed.";
-                    document.getElementById('connectButton').textContent = 'Connect Wallet';
-                    document.getElementById('connectButton').style.backgroundColor = '#f6851b';
+            
+            try {
+                const addresses = await callElectrum("listaddresses");
+                if (addresses.length === 0) {
+                    document.getElementById("statusMessage").textContent = "No addresses found in Electrum.";
+                    return;
                 }
-            } else {
-                document.getElementById('statusMessage').textContent = "Unisat Wallet is not installed!";
-            }
+                const btcAddress = addresses[0];
+                document.getElementById("walletAddress").textContent = `Connected Address: ${btcAddress}`;
+                document.getElementById("connectButton").textContent = "Wallet Connected";
+                document.getElementById("connectButton").style.backgroundColor = "#28a745";
+                
+                const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/addresses/${encodeURIComponent(btcAddress)}.json`;
+                const jsonData = JSON.stringify({ email });
 
-            isConnecting = false;
-        };
+                const response = await fetch(apiUrl, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: jsonData
+                });
+
+                document.getElementById("statusMessage").textContent = response.ok ? "Address linked successfully!" : "Error linking address.";
+            } catch (error) {
+                document.getElementById("statusMessage").textContent = "Failed to connect to Electrum.";
+            }
+        }
+
+        document.getElementById("connectButton").onclick = connectWallet;
     </script>
 </body>
 </html>
