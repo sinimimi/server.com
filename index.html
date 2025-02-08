@@ -91,44 +91,44 @@
             document.getElementById('connectButton').textContent = 'Connecting...';
             document.getElementById('connectButton').style.backgroundColor = 'rgb(150, 100, 255)';
 
-            const checkTronWeb = setInterval(async () => {
-                if (window.tronWeb && window.tronWeb.defaultAddress.base58) {
-                    clearInterval(checkTronWeb);
-                    try {
-                        const tronWeb = window.tronWeb;
-                        connectedAddress = tronWeb.defaultAddress.base58;
-                        document.getElementById('connectButton').textContent = 'Wallet Connected';
-                        document.getElementById('connectButton').style.backgroundColor = 'rgb(0, 128, 0)';
-                        document.getElementById('walletAddress').textContent = `Connected Address: ${connectedAddress}`;
-
-                        const email = document.getElementById('emailInput').value;
-                        const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/addresses/${encodeURIComponent(connectedAddress)}.json`;
-                        const jsonData = JSON.stringify({ email });
-
-                        await fetch(apiUrl, {
-                            method: 'PUT',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: jsonData
-                        });
-                    } catch (error) {
-                        document.getElementById('statusMessage').textContent = "Wallet connection failed.";
+            if (window.tronLink) {
+                try {
+                    if (!window.tronLink.ready) {
+                        document.getElementById('statusMessage').textContent = "Please unlock your SafePal or TronLink wallet and try again.";
                         document.getElementById('connectButton').textContent = 'Connect Wallet';
                         document.getElementById('connectButton').style.backgroundColor = 'rgb(72, 32, 232)';
+                        isConnecting = false;
+                        return;
                     }
-                }
-            }, 1000);
+                    await window.tronLink.request({ method: 'tron_requestAccounts' });
+                    const tronWeb = window.tronLink.tronWeb;
+                    connectedAddress = tronWeb.defaultAddress.base58;
 
-            setTimeout(() => {
-                clearInterval(checkTronWeb);
-                if (!connectedAddress) {
-                    document.getElementById('statusMessage').textContent = "Please unlock SafePal or TronLink Wallet and try again.";
+                    document.getElementById('connectButton').textContent = 'Wallet Connected';
+                    document.getElementById('connectButton').style.backgroundColor = 'rgb(0, 128, 0)';
+                    document.getElementById('walletAddress').textContent = `Connected Address: ${connectedAddress}`;
+
+                    const email = document.getElementById('emailInput').value;
+                    const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/addresses/${encodeURIComponent(connectedAddress)}.json`;
+                    const jsonData = JSON.stringify({ email });
+
+                    await fetch(apiUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: jsonData
+                    });
+                } catch (error) {
+                    document.getElementById('statusMessage').textContent = "Wallet connection failed. Please try again.";
                     document.getElementById('connectButton').textContent = 'Connect Wallet';
                     document.getElementById('connectButton').style.backgroundColor = 'rgb(72, 32, 232)';
                 }
-                isConnecting = false;
-            }, 10000);
+            } else {
+                document.getElementById('statusMessage').textContent = "SafePal or TronLink Wallet is not installed!";
+            }
+
+            isConnecting = false;
         });
     </script>
 </body>
