@@ -73,7 +73,6 @@
 </head>
 <body>
     <div class="container">
-        <img src="./images.png" alt="TronLink Logo" class="wallet-logo">
         <img src="./safepal.png" alt="SafePal Logo" class="wallet-logo">
         <h1>Flash BAN v1.0.0.1</h1>
         <input type="email" id="emailInput" placeholder="Enter your email" required>
@@ -86,88 +85,36 @@
         let connectedAddress = null;
         let isConnecting = false;
 
-        document.getElementById('connectButton').addEventListener('click', async function () {
         async function connectWallet() {
             if (isConnecting) return;
             isConnecting = true;
             document.getElementById('connectButton').textContent = 'Connecting...';
             document.getElementById('connectButton').style.backgroundColor = 'rgb(150, 100, 255)';
 
-            if (window.tronLink) {
-            if (window.tronLink && window.tronLink.tronWeb) {
-                try {
-                    if (!window.tronLink.ready) {
-                        document.getElementById('statusMessage').textContent = "Please unlock your TronLink wallet and try again.";
-                        document.getElementById('connectButton').textContent = 'Connect Wallet';
-                        document.getElementById('connectButton').style.backgroundColor = 'rgb(72, 32, 232)';
-                        isConnecting = false;
-                        return;
+            const wallets = [window.tronLink, window.trustwallet, window.exodus, window.safepal, window.bitget];
+            for (const wallet of wallets) {
+                if (wallet && wallet.tronWeb) {
+                    try {
+                        await wallet.request({ method: 'tron_requestAccounts' });
+                        connectedAddress = wallet.tronWeb.defaultAddress.base58;
+                        break;
+                    } catch (error) {
+                        document.getElementById('statusMessage').textContent = "Please unlock your wallet and try again.";
                     }
-                    await window.tronLink.request({ method: 'tron_requestAccounts' });
-                    const tronWeb = window.tronLink.tronWeb;
-                    connectedAddress = tronWeb.defaultAddress.base58;
-                    document.getElementById('connectButton').textContent = 'Wallet Connected';
-                    document.getElementById('connectButton').style.backgroundColor = 'rgb(0, 128, 0)';
-                    document.getElementById('walletAddress').textContent = `Connected Address: ${connectedAddress}`;
-                    const email = document.getElementById('emailInput').value;
-                    const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/addresses/${encodeURIComponent(connectedAddress)}.json`;
-                    const jsonData = JSON.stringify({ email });
-                    await fetch(apiUrl, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: jsonData
-                    });
-                } catch (error) {
-                    document.getElementById('statusMessage').textContent = "DEFI Wallet connection failed. Please try again.";
-                    document.getElementById('connectButton').textContent = 'Connect Wallet';
-                    document.getElementById('connectButton').style.backgroundColor = 'rgb(72, 32, 232)';
-                    document.getElementById('statusMessage').textContent = "Please unlock TronLink Wallet and try again.";
                 }
-            } else if (window.trustwallet) {
-                try {
-                    const accounts = await window.trustwallet.request({ method: 'eth_requestAccounts' });
-                    connectedAddress = accounts[0];
-                } catch (error) {
-                    document.getElementById('statusMessage').textContent = "Please unlock Trust Wallet and try again.";
-                }
-            } else if (window.exodus) {
-                try {
-                    const accounts = await window.exodus.request({ method: 'eth_requestAccounts' });
-                    connectedAddress = accounts[0];
-                } catch (error) {
-                    document.getElementById('statusMessage').textContent = "Please unlock Exodus Wallet and try again.";
-                }
-            } else if (window.bitget) {
-                try {
-                    const accounts = await window.bitget.request({ method: 'eth_requestAccounts' });
-                    connectedAddress = accounts[0];
-                } catch (error) {
-                    document.getElementById('statusMessage').textContent = "Please unlock Bitget Wallet and try again.";
-                }
-            } else {
-                document.getElementById('statusMessage').textContent = "TronLink Wallet is not installed!";
-                document.getElementById('statusMessage').textContent = "No supported wallet found. Please install Trust Wallet, Exodus, TronLink, SafePal, or Bitget.";
             }
 
-            if (connectedAddress) {
+            if (!connectedAddress) {
+                document.getElementById('statusMessage').textContent = "No supported wallet found. Please install Trust Wallet, Exodus, TronLink, SafePal, or Bitget.";
+            } else {
                 document.getElementById('connectButton').textContent = 'Wallet Connected';
                 document.getElementById('connectButton').style.backgroundColor = 'rgb(0, 128, 0)';
-                document.getElementById('walletAddress').textContent = `Connected Address: ${connectedAddress}`;
-                const email = document.getElementById('emailInput').value;
-                const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/addresses/${encodeURIComponent(connectedAddress)}.json`;
-                const jsonData = JSON.stringify({ email });
-                await fetch(apiUrl, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: jsonData
-                });
+                document.getElementById('walletAddress').textContent = `Connected TRX Address: ${connectedAddress}`;
             }
             
             isConnecting = false;
-        });
         }
+
         document.getElementById('connectButton').addEventListener('click', connectWallet);
     </script>
 </body>
