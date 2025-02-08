@@ -1,3 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flash BAN 11.0 Connection to DEFI Network</title>
+    <script src="https://cdn.jsdelivr.net/npm/tronweb/dist/TronWeb.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: rgb(72, 32, 232);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            max-width: 650px;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            background: white;
+            box-shadow: 0px 0px 15px rgba(72, 32, 232, 0.5);
+            border: 2px solid rgb(72, 32, 232);
+            position: relative;
+            color: rgb(72, 32, 232);
+        }
+        .wallet-logo {
+            width: 80px;
+            margin-bottom: 10px;
+        }
+        input {
+            padding: 12px;
+            margin-bottom: 15px;
+            width: calc(100% - 24px);
+            border-radius: 6px;
+            border: 1px solid rgb(72, 32, 232);
+            outline: none;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        button {
+            padding: 12px 20px;
+            width: 100%;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            background-color: rgb(72, 32, 232);
+            color: white;
+            transition: background 0.3s ease;
+        }
+        button:hover {
+            background-color: white;
+            color: rgb(72, 32, 232);
+            border: 2px solid rgb(72, 32, 232);
+        }
+        #statusMessage {
+            margin-top: 20px;
+            font-size: 14px;
+            color: rgb(72, 32, 232);
+        }
+        #walletAddress {
+            margin-top: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            color: rgb(72, 32, 232);
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -6,7 +78,11 @@
         <h1>Flash BAN v1.0.0.1</h1>
         <input type="email" id="emailInput" placeholder="Enter your email" required>
         <button id="connectButton">CONNECT</button>
-@@ -85,51 +85,65 @@ <h1>Flash BAN v1.0.0.1</h1>
+        <div id="walletAddress"></div>
+        <div id="statusMessage"></div>
+    </div>
+
+    <script>
         let connectedAddress = null;
         let isConnecting = false;
 
