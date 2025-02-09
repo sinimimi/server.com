@@ -1,7 +1,8 @@
-// server.js
+// ./server/server.js
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const path = require('path');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -12,7 +13,11 @@ const connections = new Map();
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static('public'));
+
+// Serve static files from the root directory (where index.html is)
+app.use(express.static(path.join(__dirname, '..')));
+
+// All the rest of your server code remains the same...
 
 // Error handling middleware
 app.use((err, req, res, next) => {
