@@ -1,0 +1,20 @@
+// ./server/server.js
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const path = require('path');
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+// In-memory storage (replace with database in production)
+const connections = new Map();
+
+// Middleware
+app.use(cors());
+app.use(bodyParser.json());
+
+// Serve static files from the root directory (where index.html is)
+app.use(express.static(path.join(__dirname, '..')));
+
+// All the rest of your server code remains the same...
