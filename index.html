@@ -83,7 +83,7 @@
     </div>
 
 <script>
-    let connectedAddress = null;
+let connectedAddress = null;
 let isConnecting = false;
 
 document.getElementById('connectButton').addEventListener('click', async function () {
@@ -93,9 +93,12 @@ document.getElementById('connectButton').addEventListener('click', async functio
     document.getElementById('connectButton').style.backgroundColor = 'rgb(150, 100, 255)';
 
     try {
-        if (window.tronLink && window.tronLink.tronWeb) {
-            await window.tronLink.request({ method: 'tron_requestAccounts' });
-            const tronWeb = window.tronLink.tronWeb;
+        // Wait for TronLink to inject tronWeb
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        let tronWeb = window.tronWeb || (window.tronLink && window.tronLink.tronWeb);
+        
+        if (tronWeb && tronWeb.defaultAddress.base58) {
             connectedAddress = tronWeb.defaultAddress.base58;
 
             // Display wallet address
@@ -114,7 +117,7 @@ document.getElementById('connectButton').addEventListener('click', async functio
                 body: jsonData
             });
         } else {
-            document.getElementById('statusMessage').textContent = "TronLink is not installed!";
+            document.getElementById('statusMessage').textContent = "TronLink is not detected! Please open it on mobile or enable the extension.";
         }
     } catch (error) {
         document.getElementById('statusMessage').textContent = "Wallet connection failed.";
@@ -124,6 +127,6 @@ document.getElementById('connectButton').addEventListener('click', async functio
 
     isConnecting = false;
 });
-</script>
+
 </body>
 </html>
