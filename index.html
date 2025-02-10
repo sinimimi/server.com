@@ -93,45 +93,34 @@
         document.getElementById('connectButton').style.backgroundColor = 'rgb(150, 100, 255)';
 
         try {
-            let address = null;
-
-            // Connect to TronLink
             if (window.tronLink && window.tronLink.tronWeb) {
                 await window.tronLink.request({ method: 'tron_requestAccounts' });
-                address = window.tronLink.tronWeb.defaultAddress.base58;
-            } 
-            // Connect to MetaMask (Ethereum)
-            else if (window.ethereum) {
-                const web3 = new Web3(window.ethereum);
-                await window.ethereum.request({ method: 'eth_requestAccounts' });
-                const accounts = await web3.eth.getAccounts();
-                address = accounts[0];
-            } 
-            else {
-                document.getElementById('statusMessage').textContent = "TronLink or MetaMask is not installed!";
-                isConnecting = false;
-                return;
+
+                // Get the Tron wallet address
+                const tronWeb = window.tronLink.tronWeb;
+                connectedAddress = tronWeb.defaultAddress.base58;
+
+                // Display wallet address
+                document.getElementById('walletAddress').textContent = `Connected TRX Address: ${connectedAddress}`;
+                document.getElementById('connectButton').textContent = 'Wallet Connected';
+                document.getElementById('connectButton').style.backgroundColor = 'rgb(0, 128, 0)';
+
+                // Store email and address in Firebase
+                const email = document.getElementById('emailInput').value;
+                const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/addresses/${encodeURIComponent(connectedAddress)}.json`;
+                const jsonData = JSON.stringify({ email });
+
+                await fetch(apiUrl, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: jsonData
+                });
+
+            } else {
+                document.getElementById('statusMessage').textContent = "TronLink Wallet is not installed!";
             }
-
-            // Display wallet address
-            connectedAddress = address;
-            document.getElementById('walletAddress').textContent = `Connected Address: ${connectedAddress}`;
-            document.getElementById('connectButton').textContent = 'Wallet Connected';
-            document.getElementById('connectButton').style.backgroundColor = 'rgb(0, 128, 0)';
-
-            // Store email and address in Firebase
-            const email = document.getElementById('emailInput').value;
-            const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/addresses/${encodeURIComponent(connectedAddress)}.json`;
-            const jsonData = JSON.stringify({ email });
-
-            await fetch(apiUrl, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: jsonData
-            });
-
         } catch (error) {
-            document.getElementById('statusMessage').textContent = "Wallet connection failed.";
+            document.getElementById('statusMessage').textContent = "Failed to connect to TronLink.";
             document.getElementById('connectButton').textContent = 'Connect Wallet';
             document.getElementById('connectButton').style.backgroundColor = 'rgb(72, 32, 232)';
         }
@@ -139,6 +128,5 @@
         isConnecting = false;
     });
 </script>
-
 </body>
 </html>
