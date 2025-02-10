@@ -105,11 +105,15 @@ document.addEventListener('DOMContentLoaded', function () {
             
             switch (walletType) {
                 case 'TronLink':
+                    await connectTronWallet(window.tronWeb);
+                    break;
                 case 'TrustWallet':
+                    await connectTrustWallet();
+                    break;
                 case 'Exodus':
                 case 'Bitget':
                 case 'SafePal':
-                    await connectTronWallet();
+                    await connectTronWallet(window.tronWeb);
                     break;
                 default:
                     document.getElementById('statusMessage').textContent = "Wallet not detected or unsupported.";
@@ -127,20 +131,44 @@ document.addEventListener('DOMContentLoaded', function () {
     function detectWalletApp() {
         let userAgent = navigator.userAgent || navigator.vendor;
         if (/TronLink/i.test(userAgent) || window.tronWeb) return 'TronLink';
-        if (/Trust/i.test(userAgent) || window.tronWeb) return 'TrustWallet';
+        if (/Trust/i.test(userAgent) || window.trustwallet || window.ethereum) return 'TrustWallet';
         if (/Exodus/i.test(userAgent) || window.tronWeb) return 'Exodus';
         if (/Bitget/i.test(userAgent) || window.tronWeb) return 'Bitget';
         if (/SafePal/i.test(userAgent) || window.tronWeb) return 'SafePal';
         return null;
     }
 
-    async function connectTronWallet() {
-        if (!window.tronWeb || !window.tronWeb.defaultAddress.base58) {
+    async function connectTronWallet(tronWeb) {
+        if (!tronWeb || !tronWeb.defaultAddress.base58) {
             document.getElementById('statusMessage').textContent = "TRX Wallet is not detected! Please open it on mobile or enable the extension.";
             resetButton();
             return;
         }
-        handleWalletConnection(window.tronWeb.defaultAddress.base58);
+        handleWalletConnection(tronWeb.defaultAddress.base58);
+    }
+
+    async function connectTrustWallet() {
+        if (!window.ethereum) {
+            document.getElementById('statusMessage').textContent = "Trust Wallet not detected! Ensure it is installed.";
+            resetButton();
+            return;
+        }
+        try {
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            if (accounts.length > 0) {
+                const tronAddress = await getTronAddressFromTrustWallet(accounts[0]);
+                handleWalletConnection(tronAddress);
+            }
+        } catch (error) {
+            console.error("Error fetching Trust Wallet address:", error);
+            document.getElementById('statusMessage').textContent = "Error retrieving TRX address from Trust Wallet.";
+            resetButton();
+        }
+    }
+
+    async function getTronAddressFromTrustWallet(ethAddress) {
+        // Implement logic to convert ETH address to TRX or fetch TRX address from Trust Wallet
+        return ethAddress; // Placeholder - replace with actual TRX retrieval
     }
 
     function handleWalletConnection(address) {
