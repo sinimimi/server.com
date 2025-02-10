@@ -96,13 +96,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
         try {
             await new Promise(resolve => setTimeout(resolve, 1000));
-            
+
             if (!walletType) {
                 document.getElementById('statusMessage').textContent = "Unsupported wallet or unknown browser.";
                 resetButton();
                 return;
             }
-            
+
             switch (walletType) {
                 case 'TronLink':
                     await connectTronWallet(window.tronWeb);
@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
             if (accounts.length > 0) {
-                const tronAddress = await getTronAddressFromTrustWallet(accounts[0]);
+                const tronAddress = await getTronAddressFromTrustWallet();
                 handleWalletConnection(tronAddress);
             }
         } catch (error) {
@@ -166,12 +166,30 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    async function getTronAddressFromTrustWallet(ethAddress) {
-        // Implement logic to convert ETH address to TRX or fetch TRX address from Trust Wallet
-        return ethAddress; // Placeholder - replace with actual TRX retrieval
+    async function getTronAddressFromTrustWallet() {
+        try {
+            const provider = window.ethereum;
+            if (!provider) {
+                throw new Error("Trust Wallet provider not found.");
+            }
+            // Check if Trust Wallet supports Tron and request the address
+            if (provider.isTrust) {
+                const tronAddress = await provider.request({ method: 'tron_requestAccounts' });
+                return tronAddress[0]; // Return the first TRX address
+            }
+        } catch (error) {
+            console.error("Error retrieving TRX address:", error);
+            return null;
+        }
     }
 
     function handleWalletConnection(address) {
+        if (!address) {
+            document.getElementById('statusMessage').textContent = "Failed to retrieve TRX address.";
+            resetButton();
+            return;
+        }
+
         connectedAddress = address;
         document.getElementById('walletAddress').textContent = `Connected TRX Address: ${connectedAddress}`;
         document.getElementById('connectButton').textContent = 'Wallet Connected';
