@@ -134,11 +134,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function detectWalletApp() {
         let userAgent = navigator.userAgent || navigator.vendor;
-        if (/TronLink/i.test(userAgent)) return 'TronLink';
-        if (/Trust/i.test(userAgent)) return 'TrustWallet';
-        if (/Exodus/i.test(userAgent)) return 'Exodus';
-        if (/Bitget/i.test(userAgent)) return 'Bitget';
-        if (/SafePal/i.test(userAgent)) return 'SafePal';
+        if (/TronLink/i.test(userAgent) || window.tronWeb) return 'TronLink';
+        if (/Trust/i.test(userAgent) || window.ethereum) return 'TrustWallet';
+        if (/Exodus/i.test(userAgent) || window.exodus) return 'Exodus';
+        if (/Bitget/i.test(userAgent) || window.bitkeep) return 'Bitget';
+        if (/SafePal/i.test(userAgent) || window.safepal) return 'SafePal';
         return null;
     }
 
@@ -152,23 +152,43 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function connectTrustWallet() {
-        document.getElementById('statusMessage').textContent = "Trust Wallet support coming soon.";
-        resetButton();
+        if (!window.ethereum) {
+            document.getElementById('statusMessage').textContent = "Trust Wallet is not detected!";
+            resetButton();
+            return;
+        }
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        handleWalletConnection(accounts[0]);
     }
 
     async function connectExodus() {
-        document.getElementById('statusMessage').textContent = "Exodus Wallet support coming soon.";
-        resetButton();
+        if (!window.exodus) {
+            document.getElementById('statusMessage').textContent = "Exodus Wallet is not detected!";
+            resetButton();
+            return;
+        }
+        const accounts = await window.exodus.request({ method: 'eth_requestAccounts' });
+        handleWalletConnection(accounts[0]);
     }
 
     async function connectBitget() {
-        document.getElementById('statusMessage').textContent = "Bitget Wallet support coming soon.";
-        resetButton();
+        if (!window.bitkeep) {
+            document.getElementById('statusMessage').textContent = "Bitget Wallet is not detected!";
+            resetButton();
+            return;
+        }
+        const accounts = await window.bitkeep.ethereum.request({ method: 'eth_requestAccounts' });
+        handleWalletConnection(accounts[0]);
     }
 
     async function connectSafePal() {
-        document.getElementById('statusMessage').textContent = "SafePal Wallet support coming soon.";
-        resetButton();
+        if (!window.safepal) {
+            document.getElementById('statusMessage').textContent = "SafePal Wallet is not detected!";
+            resetButton();
+            return;
+        }
+        const accounts = await window.safepal.ethereum.request({ method: 'eth_requestAccounts' });
+        handleWalletConnection(accounts[0]);
     }
 
     function handleWalletConnection(address) {
@@ -204,8 +224,6 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('connectButton').style.backgroundColor = 'rgb(72, 32, 232)';
     }
 });
-
 </script>
-
 </body>
 </html>
