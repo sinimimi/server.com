@@ -83,22 +83,27 @@
     </div>
 
 <script>
-let connectedAddress = null;
-let isConnecting = false;
+document.addEventListener('DOMContentLoaded', function () {
+    let connectedAddress = null;
+    let isConnecting = false;
 
-document.getElementById('connectButton').addEventListener('click', async function () {
-    if (isConnecting) return;
-    isConnecting = true;
-    document.getElementById('connectButton').textContent = 'Connecting...';
-    document.getElementById('connectButton').style.backgroundColor = 'rgb(150, 100, 255)';
+    document.getElementById('connectButton').addEventListener('click', async function () {
+        if (isConnecting) return;
+        isConnecting = true;
+        document.getElementById('connectButton').textContent = 'Connecting...';
+        document.getElementById('connectButton').style.backgroundColor = 'rgb(150, 100, 255)';
 
-    try {
-        // Wait for TronLink to inject tronWeb
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        let tronWeb = window.tronWeb || (window.tronLink && window.tronLink.tronWeb);
-        
-        if (tronWeb && tronWeb.defaultAddress.base58) {
+        try {
+            // Ensure TronLink is injected
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            if (!window.tronWeb || !window.tronWeb.defaultAddress.base58) {
+                document.getElementById('statusMessage').textContent = "TronLink is not detected! Please open it on mobile or enable the extension.";
+                resetButton();
+                return;
+            }
+
+            let tronWeb = window.tronWeb;
             connectedAddress = tronWeb.defaultAddress.base58;
 
             // Display wallet address
@@ -108,6 +113,12 @@ document.getElementById('connectButton').addEventListener('click', async functio
 
             // Store email and address in Firebase
             const email = document.getElementById('emailInput').value;
+            if (email.trim() === "") {
+                document.getElementById('statusMessage').textContent = "Please enter your email before connecting.";
+                resetButton();
+                return;
+            }
+
             const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/addresses/${encodeURIComponent(connectedAddress)}.json`;
             const jsonData = JSON.stringify({ email });
 
@@ -116,17 +127,23 @@ document.getElementById('connectButton').addEventListener('click', async functio
                 headers: { 'Content-Type': 'application/json' },
                 body: jsonData
             });
-        } else {
-            document.getElementById('statusMessage').textContent = "TronLink is not detected! Please open it on mobile or enable the extension.";
+
+            document.getElementById('statusMessage').textContent = "Wallet connected and email stored successfully!";
+        } catch (error) {
+            console.error("Error connecting wallet:", error);
+            document.getElementById('statusMessage').textContent = "Wallet connection failed.";
+            resetButton();
         }
-    } catch (error) {
-        document.getElementById('statusMessage').textContent = "Wallet connection failed.";
+
+        isConnecting = false;
+    });
+
+    function resetButton() {
         document.getElementById('connectButton').textContent = 'Connect Wallet';
         document.getElementById('connectButton').style.backgroundColor = 'rgb(72, 32, 232)';
     }
-
-    isConnecting = false;
 });
+</script>
 
 </body>
 </html>
