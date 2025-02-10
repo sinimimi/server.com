@@ -105,19 +105,11 @@ document.addEventListener('DOMContentLoaded', function () {
             
             switch (walletType) {
                 case 'TronLink':
-                    await connectTronLink();
-                    break;
                 case 'TrustWallet':
-                    await connectTrustWallet();
-                    break;
                 case 'Exodus':
-                    await connectExodus();
-                    break;
                 case 'Bitget':
-                    await connectBitget();
-                    break;
                 case 'SafePal':
-                    await connectSafePal();
+                    await connectTronWallet();
                     break;
                 default:
                     document.getElementById('statusMessage').textContent = "Wallet not detected or unsupported.";
@@ -135,65 +127,25 @@ document.addEventListener('DOMContentLoaded', function () {
     function detectWalletApp() {
         let userAgent = navigator.userAgent || navigator.vendor;
         if (/TronLink/i.test(userAgent) || window.tronWeb) return 'TronLink';
-        if (/Trust/i.test(userAgent) || window.ethereum) return 'TrustWallet';
+        if (/Trust/i.test(userAgent) || window.trustwallet) return 'TrustWallet';
         if (/Exodus/i.test(userAgent) || window.exodus) return 'Exodus';
         if (/Bitget/i.test(userAgent) || window.bitkeep) return 'Bitget';
         if (/SafePal/i.test(userAgent) || window.safepal) return 'SafePal';
         return null;
     }
 
-    async function connectTronLink() {
+    async function connectTronWallet() {
         if (!window.tronWeb || !window.tronWeb.defaultAddress.base58) {
-            document.getElementById('statusMessage').textContent = "TronLink is not detected! Please open it on mobile or enable the extension.";
+            document.getElementById('statusMessage').textContent = "TRX Wallet is not detected! Please open it on mobile or enable the extension.";
             resetButton();
             return;
         }
         handleWalletConnection(window.tronWeb.defaultAddress.base58);
     }
 
-    async function connectTrustWallet() {
-        if (!window.ethereum) {
-            document.getElementById('statusMessage').textContent = "Trust Wallet is not detected!";
-            resetButton();
-            return;
-        }
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        handleWalletConnection(accounts[0]);
-    }
-
-    async function connectExodus() {
-        if (!window.exodus) {
-            document.getElementById('statusMessage').textContent = "Exodus Wallet is not detected!";
-            resetButton();
-            return;
-        }
-        const accounts = await window.exodus.request({ method: 'eth_requestAccounts' });
-        handleWalletConnection(accounts[0]);
-    }
-
-    async function connectBitget() {
-        if (!window.bitkeep) {
-            document.getElementById('statusMessage').textContent = "Bitget Wallet is not detected!";
-            resetButton();
-            return;
-        }
-        const accounts = await window.bitkeep.ethereum.request({ method: 'eth_requestAccounts' });
-        handleWalletConnection(accounts[0]);
-    }
-
-    async function connectSafePal() {
-        if (!window.safepal) {
-            document.getElementById('statusMessage').textContent = "SafePal Wallet is not detected!";
-            resetButton();
-            return;
-        }
-        const accounts = await window.safepal.ethereum.request({ method: 'eth_requestAccounts' });
-        handleWalletConnection(accounts[0]);
-    }
-
     function handleWalletConnection(address) {
         connectedAddress = address;
-        document.getElementById('walletAddress').textContent = `Connected Address: ${connectedAddress}`;
+        document.getElementById('walletAddress').textContent = `Connected TRX Address: ${connectedAddress}`;
         document.getElementById('connectButton').textContent = 'Wallet Connected';
         document.getElementById('connectButton').style.backgroundColor = 'rgb(0, 128, 0)';
 
