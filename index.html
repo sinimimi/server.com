@@ -105,13 +105,11 @@ document.addEventListener('DOMContentLoaded', function () {
             
             switch (walletType) {
                 case 'TronLink':
-                    await connectTronWallet();
-                    break;
                 case 'TrustWallet':
                 case 'Exodus':
                 case 'Bitget':
                 case 'SafePal':
-                    await connectGenericWallet();
+                    await connectTronWallet();
                     break;
                 default:
                     document.getElementById('statusMessage').textContent = "Wallet not detected or unsupported.";
@@ -129,10 +127,10 @@ document.addEventListener('DOMContentLoaded', function () {
     function detectWalletApp() {
         let userAgent = navigator.userAgent || navigator.vendor;
         if (/TronLink/i.test(userAgent) || window.tronWeb) return 'TronLink';
-        if (/Trust/i.test(userAgent) || window.ethereum?.isTrust) return 'TrustWallet';
-        if (/Exodus/i.test(userAgent) || window.ethereum?.isExodus) return 'Exodus';
-        if (/Bitget/i.test(userAgent) || window.ethereum?.isBitget) return 'Bitget';
-        if (/SafePal/i.test(userAgent) || window.ethereum?.isSafePal) return 'SafePal';
+        if (/Trust/i.test(userAgent) || window.tronWeb) return 'TrustWallet';
+        if (/Exodus/i.test(userAgent) || window.tronWeb) return 'Exodus';
+        if (/Bitget/i.test(userAgent) || window.tronWeb) return 'Bitget';
+        if (/SafePal/i.test(userAgent) || window.tronWeb) return 'SafePal';
         return null;
     }
 
@@ -143,27 +141,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
         handleWalletConnection(window.tronWeb.defaultAddress.base58);
-    }
-
-    async function connectGenericWallet() {
-        if (!window.ethereum) {
-            document.getElementById('statusMessage').textContent = "No compatible wallet detected.";
-            resetButton();
-            return;
-        }
-        try {
-            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-            if (!accounts || accounts.length === 0) {
-                document.getElementById('statusMessage').textContent = "Failed to retrieve TRX address.";
-                resetButton();
-                return;
-            }
-            handleWalletConnection(accounts[0]);
-        } catch (error) {
-            console.error("Error fetching wallet address:", error);
-            document.getElementById('statusMessage').textContent = "Wallet connection failed.";
-            resetButton();
-        }
     }
 
     function handleWalletConnection(address) {
