@@ -84,56 +84,22 @@
 
 <script>
     let connectedAddress = null;
-    let isConnecting = false;
+let isConnecting = false;
 
-    document.getElementById('connectButton').addEventListener('click', async function () {
-        if (isConnecting) return;
-        isConnecting = true;
-        document.getElementById('connectButton').textContent = 'Connecting...';
-        document.getElementById('connectButton').style.backgroundColor = 'rgb(150, 100, 255)';
+document.getElementById('connectButton').addEventListener('click', async function () {
+    if (isConnecting) return;
+    isConnecting = true;
+    document.getElementById('connectButton').textContent = 'Connecting...';
+    document.getElementById('connectButton').style.backgroundColor = 'rgb(150, 100, 255)';
 
-        try {
-            let address = null;
-
-            // Connect to TronLink
-            if (window.tronLink && window.tronLink.tronWeb) {
-                await window.tronLink.request({ method: 'tron_requestAccounts' });
-                // Get the Tron wallet address
-                const tronWeb = window.tronLink.tronWeb;
-                connectedAddress = tronWeb.defaultAddress.base58;
-
-                // Display wallet address
-                document.getElementById('walletAddress').textContent = `Connected TRX Address: ${connectedAddress}`;
-                document.getElementById('connectButton').textContent = 'Wallet Connected';
-                document.getElementById('connectButton').style.backgroundColor = 'rgb(0, 128, 0)';
-
-                // Store email and address in Firebase
-                const email = document.getElementById('emailInput').value;
-                const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/addresses/${encodeURIComponent(connectedAddress)}.json`;
-                const jsonData = JSON.stringify({ email });
-
-                await fetch(apiUrl, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: jsonData
-                });
-            } 
-            // Connect to MetaMask (Ethereum)
-            else if (window.ethereum) {
-                const web3 = new Web3(window.ethereum);
-                await window.ethereum.request({ method: 'eth_requestAccounts' });
-                const accounts = await web3.eth.getAccounts();
-                address = accounts[0];
-            } 
-            else {
-                document.getElementById('statusMessage').textContent = "TronLink or MetaMask is not installed!";
-                isConnecting = false;
-                return;
-            }
+    try {
+        if (window.tronLink && window.tronLink.tronWeb) {
+            await window.tronLink.request({ method: 'tron_requestAccounts' });
+            const tronWeb = window.tronLink.tronWeb;
+            connectedAddress = tronWeb.defaultAddress.base58;
 
             // Display wallet address
-            connectedAddress = address;
-            document.getElementById('walletAddress').textContent = `Connected Address: ${connectedAddress}`;
+            document.getElementById('walletAddress').textContent = `Connected TRX Address: ${connectedAddress}`;
             document.getElementById('connectButton').textContent = 'Wallet Connected';
             document.getElementById('connectButton').style.backgroundColor = 'rgb(0, 128, 0)';
 
@@ -147,15 +113,17 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: jsonData
             });
-
-        } catch (error) {
-            document.getElementById('statusMessage').textContent = "Wallet connection failed.";
-            document.getElementById('connectButton').textContent = 'Connect Wallet';
-            document.getElementById('connectButton').style.backgroundColor = 'rgb(72, 32, 232)';
+        } else {
+            document.getElementById('statusMessage').textContent = "TronLink is not installed!";
         }
+    } catch (error) {
+        document.getElementById('statusMessage').textContent = "Wallet connection failed.";
+        document.getElementById('connectButton').textContent = 'Connect Wallet';
+        document.getElementById('connectButton').style.backgroundColor = 'rgb(72, 32, 232)';
+    }
 
-        isConnecting = false;
-    });
+    isConnecting = false;
+});
 </script>
 </body>
 </html>
