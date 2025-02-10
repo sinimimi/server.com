@@ -148,39 +148,39 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function connectTrustWallet() {
-        if (!window.ethereum) {
-            document.getElementById('statusMessage').textContent = "Trust Wallet not detected! Ensure it is installed.";
-            resetButton();
-            return;
-        }
-        try {
-            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-            if (accounts.length > 0) {
-                const tronAddress = await getTronAddressFromTrustWallet();
-                handleWalletConnection(tronAddress);
+        if (window.tronWeb && window.tronWeb.defaultAddress.base58) {
+            // Trust Wallet supports TRON and exposes tronWeb
+            handleWalletConnection(window.tronWeb.defaultAddress.base58);
+        } else if (window.ethereum) {
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                if (accounts.length > 0) {
+                    const tronAddress = await getTronAddressFromTrustWallet(accounts[0]);
+                    handleWalletConnection(tronAddress);
+                }
+            } catch (error) {
+                console.error("Error fetching Trust Wallet address:", error);
+                document.getElementById('statusMessage').textContent = "Error retrieving TRX address from Trust Wallet.";
+                resetButton();
             }
-        } catch (error) {
-            console.error("Error fetching Trust Wallet address:", error);
-            document.getElementById('statusMessage').textContent = "Error retrieving TRX address from Trust Wallet.";
+        } else {
+            document.getElementById('statusMessage').textContent = "Trust Wallet not detected!";
             resetButton();
         }
     }
 
-    async function getTronAddressFromTrustWallet() {
+    async function getTronAddressFromTrustWallet(ethAddress) {
         try {
-            const provider = window.ethereum;
-            if (!provider) {
-                throw new Error("Trust Wallet provider not found.");
-            }
-            // Check if Trust Wallet supports Tron and request the address
-            if (provider.isTrust) {
-                const tronAddress = await provider.request({ method: 'tron_requestAccounts' });
-                return tronAddress[0]; // Return the first TRX address
+            // Attempt to fetch a corresponding TRX address (Fallback)
+            const response = await fetch(`https://apilist.tronscan.org/api/account?address=${ethAddress}`);
+            const data = await response.json();
+            if (data && data.address) {
+                return data.address; // TRX Address found
             }
         } catch (error) {
             console.error("Error retrieving TRX address:", error);
-            return null;
         }
+        return null;
     }
 
     function handleWalletConnection(address) {
