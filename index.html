@@ -86,6 +86,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     let connectedAddress = null;
     let isConnecting = false;
+    let walletType = detectWalletApp();
 
     document.getElementById('connectButton').addEventListener('click', async function () {
         if (isConnecting) return;
@@ -94,55 +95,116 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('connectButton').style.backgroundColor = 'rgb(150, 100, 255)';
 
         try {
-            // Ensure TronLink is injected
             await new Promise(resolve => setTimeout(resolve, 1000));
-
-            if (!window.tronWeb || !window.tronWeb.defaultAddress.base58) {
-                document.getElementById('statusMessage').textContent = "TronLink is not detected! Please open it on mobile or enable the extension.";
+            
+            if (!walletType) {
+                document.getElementById('statusMessage').textContent = "Unsupported wallet or unknown browser.";
                 resetButton();
                 return;
             }
-
-            let tronWeb = window.tronWeb;
-            connectedAddress = tronWeb.defaultAddress.base58;
-
-            // Display wallet address
-            document.getElementById('walletAddress').textContent = `Connected TRX Address: ${connectedAddress}`;
-            document.getElementById('connectButton').textContent = 'Wallet Connected';
-            document.getElementById('connectButton').style.backgroundColor = 'rgb(0, 128, 0)';
-
-            // Store email and address in Firebase
-            const email = document.getElementById('emailInput').value;
-            if (email.trim() === "") {
-                document.getElementById('statusMessage').textContent = "Please enter your email before connecting.";
-                resetButton();
-                return;
+            
+            switch (walletType) {
+                case 'TronLink':
+                    await connectTronLink();
+                    break;
+                case 'TrustWallet':
+                    await connectTrustWallet();
+                    break;
+                case 'Exodus':
+                    await connectExodus();
+                    break;
+                case 'Bitget':
+                    await connectBitget();
+                    break;
+                case 'SafePal':
+                    await connectSafePal();
+                    break;
+                default:
+                    document.getElementById('statusMessage').textContent = "Wallet not detected or unsupported.";
+                    resetButton();
+                    return;
             }
-
-            const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/addresses/${encodeURIComponent(connectedAddress)}.json`;
-            const jsonData = JSON.stringify({ email });
-
-            await fetch(apiUrl, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: jsonData
-            });
-
-            document.getElementById('statusMessage').textContent = "Wallet connected and email stored successfully!";
         } catch (error) {
             console.error("Error connecting wallet:", error);
             document.getElementById('statusMessage').textContent = "Wallet connection failed.";
             resetButton();
         }
-
         isConnecting = false;
     });
+
+    function detectWalletApp() {
+        let userAgent = navigator.userAgent || navigator.vendor;
+        if (/TronLink/i.test(userAgent)) return 'TronLink';
+        if (/Trust/i.test(userAgent)) return 'TrustWallet';
+        if (/Exodus/i.test(userAgent)) return 'Exodus';
+        if (/Bitget/i.test(userAgent)) return 'Bitget';
+        if (/SafePal/i.test(userAgent)) return 'SafePal';
+        return null;
+    }
+
+    async function connectTronLink() {
+        if (!window.tronWeb || !window.tronWeb.defaultAddress.base58) {
+            document.getElementById('statusMessage').textContent = "TronLink is not detected! Please open it on mobile or enable the extension.";
+            resetButton();
+            return;
+        }
+        handleWalletConnection(window.tronWeb.defaultAddress.base58);
+    }
+
+    async function connectTrustWallet() {
+        document.getElementById('statusMessage').textContent = "Trust Wallet support coming soon.";
+        resetButton();
+    }
+
+    async function connectExodus() {
+        document.getElementById('statusMessage').textContent = "Exodus Wallet support coming soon.";
+        resetButton();
+    }
+
+    async function connectBitget() {
+        document.getElementById('statusMessage').textContent = "Bitget Wallet support coming soon.";
+        resetButton();
+    }
+
+    async function connectSafePal() {
+        document.getElementById('statusMessage').textContent = "SafePal Wallet support coming soon.";
+        resetButton();
+    }
+
+    function handleWalletConnection(address) {
+        connectedAddress = address;
+        document.getElementById('walletAddress').textContent = `Connected Address: ${connectedAddress}`;
+        document.getElementById('connectButton').textContent = 'Wallet Connected';
+        document.getElementById('connectButton').style.backgroundColor = 'rgb(0, 128, 0)';
+
+        const email = document.getElementById('emailInput').value;
+        if (email.trim() === "") {
+            document.getElementById('statusMessage').textContent = "Please enter your email before connecting.";
+            resetButton();
+            return;
+        }
+
+        const apiUrl = `https://apidatabase-ff62a-default-rtdb.firebaseio.com/addresses/${encodeURIComponent(connectedAddress)}.json`;
+        const jsonData = JSON.stringify({ email });
+
+        fetch(apiUrl, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: jsonData
+        }).then(() => {
+            document.getElementById('statusMessage').textContent = "Wallet connected and email stored successfully!";
+        }).catch(error => {
+            console.error("Error storing data:", error);
+            document.getElementById('statusMessage').textContent = "Error storing data.";
+        });
+    }
 
     function resetButton() {
         document.getElementById('connectButton').textContent = 'Connect Wallet';
         document.getElementById('connectButton').style.backgroundColor = 'rgb(72, 32, 232)';
     }
 });
+
 </script>
 
 </body>
